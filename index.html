@@ -18,6 +18,8 @@
         .hide { display: none !important; }
         /* พื้นหลัง CAPTCHA กวนบอท */
         .captcha-box { background-image: url('data:image/svg+xml;utf8,<svg width="100" height="40" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="40" fill="%23f3f4f6"/><path d="M0 10 L100 30 M0 30 L100 10 M20 0 L80 40" stroke="%23cbd5e1" stroke-width="2"/></svg>'); }
+        /* การ์ดประเมินบนมือถือ */
+        .radio-score input[type="radio"] { width: 1.25rem; height: 1.25rem; cursor: pointer; }
     </style>
     
     <script>
@@ -32,15 +34,16 @@
 </head>
 <body class="text-gray-800 h-screen flex flex-col">
 
-    <nav class="bg-primary text-white shadow-lg z-10">
+    <nav class="bg-primary text-white shadow-lg z-20 sticky top-0">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
+                <!-- Logo -->
                 <div class="flex items-center cursor-pointer hover:text-blue-200 transition" onclick="navigate('home')" title="กลับหน้าหลัก">
                     <i class="fa-solid fa-chalkboard-user text-2xl mr-3"></i>
-                    <span class="font-bold text-xl truncate">EduSupervision PA + AI</span>
+                    <span class="font-bold text-xl truncate">EduSupervision PA+AI</span>
                 </div>
                 
-                <!-- Navbar Links -->
+                <!-- Desktop Navbar Links -->
                 <div id="nav-links" class="hidden md:flex items-center space-x-1">
                     <button onclick="navigate('home')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-800 transition"><i class="fa-solid fa-house mr-1"></i> หน้าหลัก</button>
                     <button onclick="navigate('dashboard')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-800 transition"><i class="fa-solid fa-chart-pie mr-1"></i> แดชบอร์ด</button>
@@ -49,12 +52,39 @@
                     <button id="btn-nav-admin" onclick="navigate('admin')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-800 transition hidden"><i class="fa-solid fa-users-gear mr-1"></i> จัดการระบบ</button>
                 </div>
 
-                <div class="flex items-center">
+                <!-- Desktop User Info & Login -->
+                <div class="hidden md:flex items-center">
                     <div id="user-info" class="hidden mr-4 text-sm text-blue-200">
                         <span id="display-name" class="font-bold text-white"></span> (<span id="display-role"></span>)
                     </div>
                     <button id="btn-login-modal" onclick="showLogin()" class="bg-accent hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow">เข้าสู่ระบบ</button>
                     <button id="btn-logout" onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow hidden">ออกจากระบบ</button>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="flex items-center md:hidden">
+                    <button onclick="toggleMobileMenu()" class="text-white hover:text-blue-200 focus:outline-none p-2">
+                        <i class="fa-solid fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobile-menu" class="hidden md:hidden bg-blue-900 border-t border-blue-800 absolute w-full left-0 shadow-xl">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <div id="mobile-user-info" class="hidden px-3 py-2 text-sm text-blue-200 border-b border-blue-800 mb-2">
+                    <i class="fa-solid fa-user-circle mr-2"></i><span id="mobile-display-name" class="font-bold text-white"></span> (<span id="mobile-display-role"></span>)
+                </div>
+                <button onclick="navigate('home')" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-blue-800"><i class="fa-solid fa-house w-6"></i> หน้าหลัก</button>
+                <button onclick="navigate('dashboard')" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-blue-800"><i class="fa-solid fa-chart-pie w-6"></i> แดชบอร์ด</button>
+                <button onclick="navigate('report')" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-blue-800"><i class="fa-solid fa-file-lines w-6"></i> รายงาน</button>
+                <button id="mobile-btn-nav-form" onclick="navigate('form')" class="hidden w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-blue-800 text-accent"><i class="fa-solid fa-pen-to-square w-6"></i> บันทึกนิเทศ</button>
+                <button id="mobile-btn-nav-admin" onclick="navigate('admin')" class="hidden w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-blue-800 text-red-400"><i class="fa-solid fa-users-gear w-6"></i> จัดการระบบ</button>
+                
+                <div class="pt-2 border-t border-blue-800">
+                    <button id="mobile-btn-login" onclick="showLogin()" class="block w-full text-center px-3 py-2 rounded-md text-base font-bold bg-accent hover:bg-yellow-600 text-white mt-2">เข้าสู่ระบบ</button>
+                    <button id="mobile-btn-logout" onclick="logout()" class="hidden w-full text-center px-3 py-2 rounded-md text-base font-bold bg-red-600 hover:bg-red-700 text-white mt-2">ออกจากระบบ</button>
                 </div>
             </div>
         </div>
@@ -62,16 +92,16 @@
 
     <main class="flex-grow overflow-y-auto p-4 sm:p-6 lg:p-8">
         
-        <!-- View: Public Home (Default) - ปรับปรุงเป็นบริบทระดับจังหวัด กลาง บูรณาการ ว PA -->
-        <div id="view-home" class="max-w-6xl mx-auto py-10 fade-in">
-            <div class="text-center mb-12">
-                <h1 class="text-4xl md:text-5xl font-bold text-primary mb-4">ระบบนิเทศออนไลน์แบบเสริมพลัง</h1>
-                <p class="text-lg md:text-xl text-gray-600">ยกระดับสมรรถนะการจัดการเรียนรู้เชิงรุก (Active Learning) ด้วยสื่อเทคโนโลยีและ AI</p>
-                <p class="text-md text-teal-600 mt-2 font-semibold">เครือข่ายพัฒนาวิชาชีพ จังหวัดนราธิวาส</p>
+        <!-- View: Public Home (Default) -->
+        <div id="view-home" class="max-w-6xl mx-auto py-6 md:py-10 fade-in">
+            <div class="text-center mb-10 md:mb-12">
+                <h1 class="text-3xl md:text-5xl font-bold text-primary mb-4 leading-tight">ระบบนิเทศออนไลน์แบบเสริมพลัง</h1>
+                <p class="text-base md:text-xl text-gray-600">ยกระดับสมรรถนะการจัดการเรียนรู้เชิงรุก (Active Learning) ด้วยสื่อเทคโนโลยีและ AI</p>
+                <p class="text-sm md:text-md text-teal-600 mt-2 font-semibold">เครือข่ายพัฒนาวิชาชีพ จังหวัดนราธิวาส</p>
             </div>
 
             <!-- Role Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16 max-w-4xl mx-auto text-center">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-12 md:mb-16 max-w-4xl mx-auto text-center px-2">
                 <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-500 hover:shadow-lg transition">
                     <i class="fa-solid fa-magnifying-glass-chart text-4xl text-blue-500 mb-4"></i>
                     <h3 class="font-bold text-lg mb-2">บุคคลทั่วไป</h3>
@@ -90,23 +120,22 @@
                 </div>
             </div>
 
-            <!-- Knowledge Section: บูรณาการ ว PA และ Empowerment Supervision -->
+            <!-- Knowledge Section -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="bg-primary p-6 text-white text-center">
-                    <h2 class="text-2xl font-bold"><i class="fa-solid fa-diagram-project text-yellow-300 mr-2"></i> กรอบแนวคิดการนิเทศแบบเสริมพลัง สู่การประเมินวิทยฐานะ (ว PA)</h2>
-                    <p class="text-blue-100 mt-2 text-sm">การเชื่อมโยงกระบวนการนิเทศ สู่การปฏิบัติตามมาตรฐานตำแหน่ง และการจัดทำประเด็นท้าทาย (Challenge Issues)</p>
+                    <h2 class="text-xl md:text-2xl font-bold"><i class="fa-solid fa-diagram-project text-yellow-300 mr-2"></i> กรอบแนวคิดการนิเทศแบบเสริมพลัง สู่การประเมินวิทยฐานะ (ว PA)</h2>
+                    <p class="text-blue-100 mt-2 text-xs md:text-sm">การเชื่อมโยงกระบวนการนิเทศ สู่การปฏิบัติตามมาตรฐานตำแหน่ง และการจัดทำประเด็นท้าทาย (Challenge Issues)</p>
                 </div>
                 
-                <div class="p-6 md:p-8">
+                <div class="p-4 md:p-8">
                     <!-- กระบวนการนิเทศ 5 ขั้นตอน -->
                     <div class="mb-10">
-                        <div class="bg-blue-50 rounded-xl p-6 border border-blue-100 relative overflow-hidden">
-                            <h3 class="text-xl font-bold text-blue-800 mb-6 text-center">กระบวนการนิเทศแบบเสริมพลัง (Empowerment Supervision - Gibson, 1992)</h3>
+                        <div class="bg-blue-50 rounded-xl p-4 md:p-6 border border-blue-100 relative overflow-hidden">
+                            <h3 class="text-lg md:text-xl font-bold text-blue-800 mb-6 text-center">กระบวนการนิเทศแบบเสริมพลัง (Empowerment Supervision - Gibson, 1992)</h3>
                             
                             <div class="flex flex-col md:flex-row items-stretch justify-center gap-4">
-                                <!-- กล่อง 1: กระบวนการนิเทศ -->
                                 <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-primary w-full md:w-1/3 flex flex-col">
-                                    <h4 class="font-bold text-md text-primary mb-2 border-b pb-1">1. กระบวนการนิเทศ</h4>
+                                    <h4 class="font-bold text-sm md:text-md text-primary mb-2 border-b pb-1">1. กระบวนการนิเทศ</h4>
                                     <ul class="text-xs text-gray-600 space-y-1 list-disc pl-4 flex-grow">
                                         <li>สร้างความสัมพันธ์เชิงบวก</li>
                                         <li>วินิจฉัยระบุปัญหา / ความต้องการ</li>
@@ -121,9 +150,8 @@
                                     <i class="fa-solid fa-arrow-down-long text-2xl text-blue-300 md:hidden my-2"></i>
                                 </div>
                                 
-                                <!-- กล่อง 2: มาตรฐานตำแหน่ง (ว PA) -->
                                 <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-secondary w-full md:w-1/3 flex flex-col">
-                                    <h4 class="font-bold text-md text-secondary mb-2 border-b pb-1">2. การปฏิบัติตามมาตรฐานตำแหน่ง</h4>
+                                    <h4 class="font-bold text-sm md:text-md text-secondary mb-2 border-b pb-1">2. การปฏิบัติตามมาตรฐานตำแหน่ง</h4>
                                     <p class="text-xs text-gray-600 mb-2">การพัฒนางานตามหลักเกณฑ์ ว PA</p>
                                     <ul class="text-xs text-gray-600 space-y-1 list-disc pl-4 flex-grow">
                                         <li>ด้านที่ 1: การจัดการเรียนรู้ (8 ตัวชี้วัด)</li>
@@ -137,9 +165,8 @@
                                     <i class="fa-solid fa-arrow-down-long text-2xl text-blue-300 md:hidden my-2"></i>
                                 </div>
                                 
-                                <!-- กล่อง 3: ประเด็นท้าทาย -->
                                 <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-accent w-full md:w-1/3 flex flex-col">
-                                    <h4 class="font-bold text-md text-yellow-600 mb-2 border-b pb-1">3. สู่ประเด็นท้าทาย (Challenge)</h4>
+                                    <h4 class="font-bold text-sm md:text-md text-yellow-600 mb-2 border-b pb-1">3. สู่ประเด็นท้าทาย (Challenge)</h4>
                                     <p class="text-xs text-gray-600 mb-2">การนำผลการสะท้อนคิดไปต่อยอด:</p>
                                     <ul class="text-xs text-gray-600 space-y-1 list-disc pl-4 flex-grow">
                                         <li>ริเริ่ม พัฒนา นวัตกรรมการเรียนรู้</li>
@@ -151,70 +178,30 @@
                         </div>
                     </div>
                     
-                    <!-- ส่วนขยาย: การปฏิบัติตามมาตรฐานตำแหน่ง และ ประเด็นท้าทาย -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                        <div class="bg-blue-50/50 p-6 rounded-xl border border-blue-100 hover:shadow-md transition">
-                            <h3 class="text-lg font-bold text-primary mb-3 flex items-center"><i class="fa-solid fa-medal text-2xl mr-2"></i> การปฏิบัติตามมาตรฐานตำแหน่ง</h3>
-                            <p class="text-sm text-gray-600 mb-3">การประเมินประสิทธิภาพการปฏิบัติงานของครูตามหลักเกณฑ์ ว PA เพื่อให้สอดคล้องกับวิทยฐานะ ประกอบด้วย 3 ด้านหลัก:</p>
-                            <ul class="text-sm text-gray-700 space-y-2 list-none">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
+                        <div class="bg-blue-50/50 p-5 rounded-xl border border-blue-100 hover:shadow-md transition">
+                            <h3 class="text-md md:text-lg font-bold text-primary mb-3 flex items-center"><i class="fa-solid fa-medal text-2xl mr-2"></i> การปฏิบัติตามมาตรฐานตำแหน่ง</h3>
+                            <p class="text-xs md:text-sm text-gray-600 mb-3">การประเมินประสิทธิภาพการปฏิบัติงานของครูตามหลักเกณฑ์ ว PA เพื่อให้สอดคล้องกับวิทยฐานะ ประกอบด้วย 3 ด้านหลัก:</p>
+                            <ul class="text-xs md:text-sm text-gray-700 space-y-2 list-none">
                                 <li><i class="fa-solid fa-check text-green-500 mr-1"></i> <strong>ด้านที่ 1: การจัดการเรียนรู้</strong> (เน้น 8 ตัวชี้วัด Active Learning)</li>
                                 <li><i class="fa-solid fa-check text-green-500 mr-1"></i> <strong>ด้านที่ 2: การส่งเสริมและสนับสนุน</strong> การจัดการเรียนรู้</li>
                                 <li><i class="fa-solid fa-check text-green-500 mr-1"></i> <strong>ด้านที่ 3: การพัฒนาตนเอง</strong> และพัฒนาวิชาชีพ (PLC)</li>
                             </ul>
-                            <div class="mt-4 p-3 bg-white rounded border border-blue-200 text-xs text-blue-800">
+                            <div class="mt-4 p-3 bg-white rounded border border-blue-200 text-[10px] md:text-xs text-blue-800">
                                 * ระบบนิเทศออนไลน์นี้ มุ่งเน้นการเก็บร่องรอยเชิงประจักษ์ใน <strong>ด้านที่ 1</strong> เพื่อใช้เป็นหลักฐานประกอบการประเมินในระบบ DPA
                             </div>
                         </div>
                         
-                        <div class="bg-yellow-50/50 p-6 rounded-xl border border-yellow-100 hover:shadow-md transition">
-                            <h3 class="text-lg font-bold text-yellow-700 mb-3 flex items-center"><i class="fa-solid fa-mountain-sun text-2xl mr-2"></i> ประเด็นท้าทาย (Challenge)</h3>
-                            <p class="text-sm text-gray-600 mb-3">ข้อตกลงในการพัฒนางานที่ครูเสนอต่อผู้บริหาร เพื่อแสดงให้เห็นถึงความมุ่งมั่นในการแก้ปัญหา หรือพัฒนาคุณภาพผู้เรียนตามระดับวิทยฐานะ:</p>
-                            <ul class="text-sm text-gray-700 space-y-2 list-none">
+                        <div class="bg-yellow-50/50 p-5 rounded-xl border border-yellow-100 hover:shadow-md transition">
+                            <h3 class="text-md md:text-lg font-bold text-yellow-700 mb-3 flex items-center"><i class="fa-solid fa-mountain-sun text-2xl mr-2"></i> ประเด็นท้าทาย (Challenge)</h3>
+                            <p class="text-xs md:text-sm text-gray-600 mb-3">ข้อตกลงในการพัฒนางานที่ครูเสนอต่อผู้บริหาร เพื่อแสดงให้เห็นถึงความมุ่งมั่นในการแก้ปัญหา หรือพัฒนาคุณภาพผู้เรียนตามระดับวิทยฐานะ:</p>
+                            <ul class="text-xs md:text-sm text-gray-700 space-y-2 list-none">
                                 <li><i class="fa-solid fa-arrow-trend-up text-accent mr-1"></i> <strong>ปรับประยุกต์</strong> (ชำนาญการ)</li>
                                 <li><i class="fa-solid fa-arrow-trend-up text-accent mr-1"></i> <strong>แก้ไขปัญหา</strong> (ชำนาญการพิเศษ)</li>
                                 <li><i class="fa-solid fa-arrow-trend-up text-accent mr-1"></i> <strong>ริเริ่ม พัฒนา</strong> (เชี่ยวชาญ)</li>
                             </ul>
-                            <div class="mt-4 p-3 bg-white rounded border border-yellow-200 text-xs text-yellow-800">
+                            <div class="mt-4 p-3 bg-white rounded border border-yellow-200 text-[10px] md:text-xs text-yellow-800">
                                 * การนิเทศจะช่วยสะท้อนผลลัพธ์ว่า นวัตกรรมหรือเทคโนโลยี (AI) ที่ครูนำมาใช้นั้น ตอบโจทย์ <strong>ประเด็นท้าทาย</strong> ที่ตั้งไว้หรือไม่
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- เจาะลึก 8 ตัวชี้วัด แบบบูรณาการ -->
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-800 mb-4 border-l-4 border-accent pl-3">การประเมิน 8 ตัวชี้วัด ด้านการจัดการเรียนรู้ (บูรณาการสื่อ เทคโนโลยี และ AI)</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-blue-400 transition">
-                                <div class="text-blue-600 font-bold text-md mb-1">1. ผู้เรียนเข้าถึงและเข้าใจ</div>
-                                <p class="text-xs text-gray-600">เชื่อมโยงความรู้เดิมสู่ความรู้ใหม่ โดยใช้สื่อ เทคโนโลยี หรือ AI ช่วยสร้างบริบทที่เข้าใจง่าย</p>
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-blue-400 transition">
-                                <div class="text-blue-600 font-bold text-md mb-1">2. ผู้เรียนเชื่อมโยง/แก้ปัญหา</div>
-                                <p class="text-xs text-gray-600">เปิดโอกาสให้ผู้เรียนเผชิญสถานการณ์ปัญหา ฝึกตั้งคำถาม และค้นหาคำตอบด้วยตนเอง</p>
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-blue-400 transition">
-                                <div class="text-blue-600 font-bold text-md mb-1">3. ผู้เรียนสร้างความรู้เอง</div>
-                                <p class="text-xs text-gray-600">ออกแบบกิจกรรมแบบ Active Learning ให้ผู้เรียนลงมือปฏิบัติ (Do & Reflect) ผ่านนวัตกรรม</p>
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-blue-400 transition">
-                                <div class="text-blue-600 font-bold text-md mb-1">4. ผู้เรียนมีส่วนร่วม/สะท้อนคิด</div>
-                                <p class="text-xs text-gray-600">กระตุ้นให้ผู้เรียนสื่อสาร นำเสนอผลงาน อภิปราย และวิพากษ์ผลลัพธ์อย่างมีเหตุผล</p>
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-teal-400 transition">
-                                <div class="text-teal-600 font-bold text-md mb-1">5. บรรยากาศส่งเสริมการเรียนรู้</div>
-                                <p class="text-xs text-gray-600">สร้างสภาพแวดล้อมที่ปลอดภัย กล้าคิด กล้าทดลองใช้เทคโนโลยี และมีส่วนร่วมทุกคน</p>
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-teal-400 transition">
-                                <div class="text-teal-600 font-bold text-md mb-1">6. ตอบสนองความแตกต่าง</div>
-                                <p class="text-xs text-gray-600">ใช้ความหลากหลายของสื่อ หรือ AI ในการช่วยเหลือเด็กกลุ่มช้า และท้าทายเด็กกลุ่มเก่ง</p>
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-teal-400 transition">
-                                <div class="text-teal-600 font-bold text-md mb-1">7. การพัฒนาและให้ Feedback</div>
-                                <p class="text-xs text-gray-600">ประเมินผลตามสภาพจริงระหว่างเรียน และให้ข้อมูลย้อนกลับเชิงบวกเพื่อพัฒนาชิ้นงาน</p>
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-teal-400 transition">
-                                <div class="text-teal-600 font-bold text-md mb-1">8. กำกับการเรียนรู้ (ผลลัพธ์)</div>
-                                <p class="text-xs text-gray-600">ผลงานผู้เรียนสะท้อนทักษะในศตวรรษที่ 21 ตรงตามประเด็นท้าทายที่ครูกำหนดไว้ใน ว PA</p>
                             </div>
                         </div>
                     </div>
@@ -223,50 +210,50 @@
         </div>
 
         <!-- View: Dashboard -->
-        <div id="view-dashboard" class="max-w-7xl mx-auto fade-in hidden">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-l-4 border-primary pl-3">แดชบอร์ดสถิติภาพรวมการนิเทศ</h2>
+        <div id="view-dashboard" class="max-w-7xl mx-auto fade-in hidden py-4">
+            <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 border-l-4 border-primary pl-3">แดชบอร์ดสถิติภาพรวมการนิเทศ</h2>
             
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center justify-between">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-100 flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-500 font-medium">จำนวนครั้งการนิเทศรวม</p>
-                        <h4 id="stat-total-sups" class="text-3xl font-bold text-primary mt-1">0</h4>
+                        <p class="text-xs md:text-sm text-gray-500 font-medium">จำนวนครั้งการนิเทศรวม</p>
+                        <h4 id="stat-total-sups" class="text-2xl md:text-3xl font-bold text-primary mt-1">0</h4>
                     </div>
                     <div class="bg-blue-100 p-3 rounded-full text-blue-600"><i class="fa-solid fa-file-signature text-xl"></i></div>
                 </div>
-                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center justify-between">
+                <div class="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-100 flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-500 font-medium">ครูที่รับการนิเทศแล้ว</p>
-                        <h4 id="stat-supervised-teachers" class="text-3xl font-bold text-teal-600 mt-1">0</h4>
+                        <p class="text-xs md:text-sm text-gray-500 font-medium">ครูที่รับการนิเทศแล้ว</p>
+                        <h4 id="stat-supervised-teachers" class="text-2xl md:text-3xl font-bold text-teal-600 mt-1">0</h4>
                     </div>
                     <div class="bg-teal-100 p-3 rounded-full text-teal-600"><i class="fa-solid fa-user-check text-xl"></i></div>
                 </div>
-                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center justify-between">
+                <div class="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-100 flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-500 font-medium">ครูที่รอการนิเทศ</p>
-                        <h4 id="stat-pending-teachers" class="text-3xl font-bold text-orange-500 mt-1">0</h4>
+                        <p class="text-xs md:text-sm text-gray-500 font-medium">ครูที่รอการนิเทศ</p>
+                        <h4 id="stat-pending-teachers" class="text-2xl md:text-3xl font-bold text-orange-500 mt-1">0</h4>
                     </div>
                     <div class="bg-orange-100 p-3 rounded-full text-orange-600"><i class="fa-solid fa-user-clock text-xl"></i></div>
                 </div>
-                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center justify-between">
+                <div class="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-100 flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-500 font-medium">คะแนนเฉลี่ย (เต็ม 4.00)</p>
-                        <h4 id="stat-avg-score" class="text-3xl font-bold text-accent mt-1">0.00</h4>
+                        <p class="text-xs md:text-sm text-gray-500 font-medium">คะแนนเฉลี่ย (เต็ม 4.00)</p>
+                        <h4 id="stat-avg-score" class="text-2xl md:text-3xl font-bold text-accent mt-1">0.00</h4>
                     </div>
                     <div class="bg-yellow-100 p-3 rounded-full text-yellow-600"><i class="fa-solid fa-star text-xl"></i></div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 class="text-lg font-bold text-gray-700 mb-4 text-center">ร้อยละความสำเร็จตาม 8 ตัวชี้วัด (ว PA)</h3>
-                    <div class="relative h-72 w-full">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                <div class="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-md md:text-lg font-bold text-gray-700 mb-4 text-center">คะแนนเฉลี่ยตาม 8 ตัวชี้วัด (ว PA ด้านที่ 1)</h3>
+                    <div class="relative h-64 md:h-72 w-full">
                         <canvas id="radarChart"></canvas>
                     </div>
                 </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 class="text-lg font-bold text-gray-700 mb-4 text-center">สัดส่วนการบูรณาการใช้สื่อเทคโนโลยี/AI</h3>
-                    <div class="relative h-72 w-full flex justify-center">
+                <div class="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-md md:text-lg font-bold text-gray-700 mb-4 text-center">สัดส่วนการบูรณาการใช้สื่อเทคโนโลยี/AI</h3>
+                    <div class="relative h-64 md:h-72 w-full flex justify-center">
                         <canvas id="pieChart"></canvas>
                     </div>
                 </div>
@@ -274,15 +261,15 @@
         </div>
 
         <!-- View: Form -->
-        <div id="view-form" class="max-w-5xl mx-auto fade-in hidden">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-l-4 border-secondary pl-3">แบบบันทึกการนิเทศชั้นเรียนและสะท้อนคิด</h2>
+        <div id="view-form" class="max-w-5xl mx-auto fade-in hidden py-4">
+            <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6 border-l-4 border-secondary pl-3">แบบบันทึกการนิเทศชั้นเรียนและสะท้อนคิด</h2>
             <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
                 <form id="supervisionForm" onsubmit="submitSupervision(event)">
-                    <div class="p-6 md:p-8">
+                    <div class="p-4 md:p-8">
                         
                         <!-- ส่วนที่ 1: ข้อมูลทั่วไป -->
                         <div class="mb-8">
-                            <h3 class="text-lg font-bold text-primary border-b-2 border-blue-100 pb-2 mb-4"><i class="fa-regular fa-address-card mr-2"></i>ข้อมูลพื้นฐาน</h3>
+                            <h3 class="text-md md:text-lg font-bold text-primary border-b-2 border-blue-100 pb-2 mb-4"><i class="fa-regular fa-address-card mr-2"></i>ส่วนที่ 1: ข้อมูลพื้นฐาน</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-bold text-gray-700 mb-1">วันที่รับการนิเทศ</label>
@@ -298,13 +285,13 @@
                                         <option value="5. สะท้อนผล (Reflection)">ระยะที่ 5: สะท้อนผลและปรับปรุงต่อเนื่อง</option>
                                     </select>
                                 </div>
+                                
                                 <div>
                                     <label class="block text-sm font-bold text-gray-700 mb-1">ครูผู้รับการนิเทศ</label>
                                     <select id="form-teacher-id" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary" required>
                                         <option value="">-- เลือกครูผู้สอน --</option>
                                     </select>
                                 </div>
-                                
                                 <div>
                                     <label class="block text-sm font-bold text-gray-700 mb-1">ผู้ร่วมนิเทศ (ถ้ามี)</label>
                                     <input type="text" id="form-co-supervisor" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary" placeholder="ระบุ ชื่อ-สกุล หรือตำแหน่ง">
@@ -369,8 +356,8 @@
                                 </div>
 
                                 <div class="md:col-span-2">
-                                    <label class="block text-sm font-bold text-gray-700 mb-1">ประเด็นท้าทาย (Challenge Issue) ที่เกี่ยวข้องกับการสอนครั้งนี้ (ถ้ามี)</label>
-                                    <input type="text" id="form-pa-challenge" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary" placeholder="ระบุข้อตกลงประเด็นท้าทาย (ว PA) ของครู เช่น การแก้ปัญหาการคิดวิเคราะห์ด้วยนวัตกรรม...">
+                                    <label class="block text-sm font-bold text-gray-700 mb-1 text-blue-700"><i class="fa-solid fa-bullseye mr-1"></i> ประเด็นท้าทาย (Challenge Issue) ที่เกี่ยวข้อง (ถ้ามี)</label>
+                                    <input type="text" id="form-pa-challenge" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary bg-blue-50" placeholder="ระบุข้อตกลงประเด็นท้าทาย (ว PA) ของครู เช่น การแก้ปัญหา... ด้วยนวัตกรรม...">
                                 </div>
 
                                 <div class="md:col-span-2">
@@ -380,37 +367,24 @@
                             </div>
                         </div>
 
-                        <!-- ส่วนที่ 2: การประเมิน ว PA -->
+                        <!-- ส่วนที่ 2: การประเมิน ว PA (Card Layout สำหรับมือถือ) -->
                         <div class="mb-8">
                             <div class="flex flex-col md:flex-row md:justify-between md:items-end border-b-2 border-teal-100 pb-2 mb-4 gap-2">
-                                <h3 class="text-lg font-bold text-secondary"><i class="fa-solid fa-list-check mr-2"></i>ตารางประเมินการปฏิบัติงาน (8 ตัวชี้วัด)</h3>
-                                <div class="text-xs text-gray-700 font-semibold bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200">
-                                    เกณฑ์: 4=ดีเยี่ยม, 3=ดี, 2=พอใช้, 1=ควรปรับปรุง, 0=ไม่ชัดเจน
+                                <h3 class="text-md md:text-lg font-bold text-secondary"><i class="fa-solid fa-list-check mr-2"></i>ส่วนที่ 2: การประเมินการปฏิบัติงาน (8 ตัวชี้วัด)</h3>
+                                <div class="text-xs text-gray-700 font-semibold bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200 inline-block self-start md:self-end">
+                                    เกณฑ์: 4=ดีเยี่ยม, 3=ดี, 2=พอใช้, 1=ปรับปรุง, 0=ไม่ชัดเจน
                                 </div>
                             </div>
                             
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full border-collapse border border-gray-200 rounded-lg">
-                                    <thead class="bg-gray-50 text-gray-700">
-                                        <tr>
-                                            <th class="border p-3 text-left w-1/2">ตัวชี้วัดด้านการจัดการเรียนรู้ (ประยุกต์ใช้กับทุกรายวิชา)</th>
-                                            <th class="border p-3 text-center w-12" title="ดีเยี่ยม">4</th>
-                                            <th class="border p-3 text-center w-12" title="ดี">3</th>
-                                            <th class="border p-3 text-center w-12" title="พอใช้">2</th>
-                                            <th class="border p-3 text-center w-12" title="ควรปรับปรุง">1</th>
-                                            <th class="border p-3 text-center w-12" title="ไม่ชัดเจน">0</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="criteria-table-body" class="text-sm">
-                                        <!-- สร้างด้วย JS -->
-                                    </tbody>
-                                </table>
+                            <!-- Container สำหรับการ์ดประเมิน (สร้างด้วย JS) -->
+                            <div id="criteria-container" class="space-y-4">
+                                <!-- Cards injected here -->
                             </div>
                         </div>
 
                         <!-- ส่วนที่ 3: สรุปผล -->
                         <div>
-                            <h3 class="text-lg font-bold text-accent border-b-2 border-yellow-100 pb-2 mb-4"><i class="fa-regular fa-comment-dots mr-2"></i>ข้อค้นพบและการสะท้อนคิด (Reflection)</h3>
+                            <h3 class="text-md md:text-lg font-bold text-accent border-b-2 border-yellow-100 pb-2 mb-4"><i class="fa-regular fa-comment-dots mr-2"></i>ส่วนที่ 3: ข้อค้นพบและการสะท้อนคิด (Reflection)</h3>
                             <div class="space-y-4">
                                 <div>
                                     <label class="block text-sm font-bold text-gray-700 mb-1">จุดเด่นที่พบในการจัดการเรียนรู้ (Strengths & Best Practices)</label>
@@ -419,45 +393,45 @@
                                 <div>
                                     <div class="flex justify-between items-end mb-1">
                                         <label class="block text-sm font-bold text-gray-700">ข้อเสนอแนะเพื่อพัฒนาสู่ "ประเด็นท้าทาย" (Recommendations)</label>
-                                        <button type="button" onclick="generateAIRecommendations()" class="text-xs bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded shadow transition flex items-center">
-                                            <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> AI ช่วยร่างข้อเสนอแนะ
+                                        <button type="button" onclick="generateAIRecommendations()" class="text-[10px] md:text-xs bg-purple-600 hover:bg-purple-700 text-white px-2 py-1.5 rounded shadow transition flex items-center">
+                                            <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> AI ช่วยร่าง
                                         </button>
                                     </div>
-                                    <textarea id="form-recommendations" rows="3" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary" placeholder="ระบุข้อควรพัฒนา การแก้ปัญหาผู้เรียน หรือแนวทางการต่อยอดสู่ประเด็นท้าทาย (Challenge)..."></textarea>
+                                    <textarea id="form-recommendations" rows="4" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary" placeholder="ระบุข้อควรพัฒนา การแก้ปัญหาผู้เรียน หรือแนวทางการต่อยอดสู่ประเด็นท้าทาย (Challenge)..."></textarea>
                                 </div>
                             </div>
                         </div>
 
                     </div>
-                    <div class="bg-gray-50 p-6 border-t border-gray-200 flex justify-end space-x-3">
-                        <button type="button" onclick="navigate('report')" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-bold transition">ยกเลิก</button>
-                        <button type="submit" class="px-5 py-2.5 bg-primary text-white rounded-lg hover:bg-blue-800 font-bold transition shadow"><i class="fa-solid fa-save mr-2"></i> บันทึกผลการนิเทศ</button>
+                    <div class="bg-gray-50 p-4 md:p-6 border-t border-gray-200 flex justify-end space-x-3">
+                        <button type="button" onclick="navigate('report')" class="px-4 md:px-5 py-2 md:py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-bold transition text-sm md:text-base">ยกเลิก</button>
+                        <button type="submit" class="px-4 md:px-5 py-2 md:py-2.5 bg-primary text-white rounded-lg hover:bg-blue-800 font-bold transition shadow text-sm md:text-base"><i class="fa-solid fa-save mr-2"></i> บันทึกผล</button>
                     </div>
                 </form>
             </div>
         </div>
 
         <!-- View: Report -->
-        <div id="view-report" class="max-w-7xl mx-auto fade-in hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800 border-l-4 border-blue-500 pl-3">รายงานผลการนิเทศและประเมิน ว PA</h2>
+        <div id="view-report" class="max-w-7xl mx-auto fade-in hidden py-4">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+                <h2 class="text-xl md:text-2xl font-bold text-gray-800 border-l-4 border-blue-500 pl-3">รายงานผลการนิเทศและประเมิน ว PA</h2>
                 <div id="report-action-area"></div>
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-left text-sm whitespace-nowrap">
-                        <thead class="uppercase tracking-wider border-b-2 border-gray-200 bg-gray-50 text-gray-600 font-bold">
+                        <thead class="uppercase tracking-wider border-b-2 border-gray-200 bg-gray-50 text-gray-600 font-bold text-xs md:text-sm">
                             <tr>
                                 <th class="py-3 px-4">วันที่นิเทศ</th>
                                 <th class="py-3 px-4">ผู้รับการนิเทศ</th>
                                 <th class="py-3 px-4">ผู้นิเทศ</th>
                                 <th class="py-3 px-4">ระดับชั้น/วิชา</th>
-                                <th class="py-3 px-4 text-center">คะแนนรวม</th>
+                                <th class="py-3 px-4 text-center">คะแนน</th>
                                 <th class="py-3 px-4 text-center">จัดการ</th>
                             </tr>
                         </thead>
-                        <tbody id="report-table-body" class="divide-y divide-gray-100">
+                        <tbody id="report-table-body" class="divide-y divide-gray-100 text-xs md:text-sm">
                             <!-- JS Injected -->
                         </tbody>
                     </table>
@@ -470,25 +444,25 @@
         </div>
 
         <!-- View: Admin (User Management) -->
-        <div id="view-admin" class="max-w-6xl mx-auto fade-in hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800 border-l-4 border-red-500 pl-3">การจัดการระบบ (แอดมิน)</h2>
-                <button onclick="showUserModal()" class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-800 transition"><i class="fa-solid fa-user-plus mr-1"></i> เพิ่มผู้ใช้ใหม่</button>
+        <div id="view-admin" class="max-w-6xl mx-auto fade-in hidden py-4">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
+                <h2 class="text-xl md:text-2xl font-bold text-gray-800 border-l-4 border-red-500 pl-3">การจัดการระบบ (แอดมิน)</h2>
+                <button onclick="showUserModal()" class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-800 transition self-start sm:self-auto"><i class="fa-solid fa-user-plus mr-1"></i> เพิ่มผู้ใช้ใหม่</button>
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-left text-sm whitespace-nowrap">
-                        <thead class="uppercase tracking-wider border-b-2 border-gray-200 bg-gray-50 text-gray-600 font-bold">
+                        <thead class="uppercase tracking-wider border-b-2 border-gray-200 bg-gray-50 text-gray-600 font-bold text-xs md:text-sm">
                             <tr>
-                                <th class="py-3 px-4">ID / Username</th>
+                                <th class="py-3 px-4">Username</th>
                                 <th class="py-3 px-4">ชื่อ-นามสกุล</th>
-                                <th class="py-3 px-4">สิทธิ์การใช้งาน (Role)</th>
+                                <th class="py-3 px-4">สิทธิ์ (Role)</th>
                                 <th class="py-3 px-4 text-center">สถานะ</th>
                                 <th class="py-3 px-4 text-center">จัดการ</th>
                             </tr>
                         </thead>
-                        <tbody id="admin-user-body" class="divide-y divide-gray-100">
+                        <tbody id="admin-user-body" class="divide-y divide-gray-100 text-xs md:text-sm">
                             <!-- JS Injected -->
                         </tbody>
                     </table>
@@ -500,14 +474,14 @@
 
     <!-- Footer -->
     <footer class="bg-white border-t border-gray-200 py-4 mt-auto flex-shrink-0 z-10">
-        <div class="max-w-7xl mx-auto px-4 text-center text-sm text-gray-500">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs md:text-sm text-gray-500">
             <p>พัฒนาระบบโดย <span class="font-bold text-primary">ธนะวัฒน์ เลิศประเสริฐ</span> ศน.ศธจ.นราธิวาส</p>
         </div>
     </footer>
 
     <!-- Modal Login -->
     <div id="modal-login" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center hidden">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 transform transition-all p-6">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 transform transition-all p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-primary">เข้าสู่ระบบ</h3>
                 <button onclick="hideLogin()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
@@ -515,17 +489,17 @@
             <form onsubmit="handleLogin(event)">
                 <div class="mb-4">
                     <label class="block text-sm font-bold text-gray-700 mb-1">Username</label>
-                    <input type="text" id="login-username" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary" placeholder="รหัสผู้ใช้งาน" required>
+                    <input type="text" id="login-username" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary" placeholder="รหัสผู้ใช้งาน" required autocomplete="username">
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-bold text-gray-700 mb-1">Password</label>
-                    <input type="password" id="login-password" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary" placeholder="รหัสผ่าน" required>
+                    <input type="password" id="login-password" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary" placeholder="รหัสผ่าน" required autocomplete="current-password">
                 </div>
                 <div class="mb-6">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">การป้องกันสแปม (แก้โจทย์คณิตศาสตร์)</label>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">ยืนยันตัวตน (แก้โจทย์เลข)</label>
                     <div class="flex items-center space-x-3">
-                        <div id="captcha-display" class="captcha-box border border-gray-300 px-4 py-2 rounded text-lg font-mono font-bold tracking-widest text-gray-800 select-none flex-shrink-0 w-28 text-center shadow-inner">
-                            ? + ?
+                        <div id="captcha-display" class="captcha-box border border-gray-300 px-4 py-2 rounded text-lg font-mono font-bold tracking-widest text-gray-800 select-none flex-shrink-0 w-24 text-center shadow-inner">
+                            ?+?
                         </div>
                         <input type="number" id="login-captcha" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary" placeholder="คำตอบ" required autocomplete="off">
                         <button type="button" onclick="generateCaptcha()" class="text-gray-500 hover:text-blue-600 p-2" title="สุ่มคำถามใหม่"><i class="fa-solid fa-rotate"></i></button>
@@ -544,7 +518,7 @@
 
     <!-- Modal เพิ่ม/แก้ไข ผู้ใช้ (Admin) -->
     <div id="modal-user" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center hidden">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 transform transition-all p-6">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 transform transition-all p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 id="modal-user-title" class="text-xl font-bold text-primary">เพิ่มผู้ใช้ใหม่</h3>
                 <button onclick="hideUserModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
@@ -591,33 +565,31 @@
         let dbSupervisions = [
             {
                 id: 'SUP-001', date: '2026-08-15', phase: '4. สังเกตชั้นเรียน (Implementation)', 
-                teacherId: 3, supervisorId: 2, classLevel: 'ม.1', room: '2', 
-                coSupervisor: 'ผอ. สมเกียรติ ยอดเยี่ยม',
-                subject: 'วิทยาศาสตร์และเทคโนโลยี', topic: 'ระบบนิเวศจำลอง', 
-                paChallenge: 'การแก้ปัญหาความเข้าใจระบบนิเวศด้วยการสร้างแบบจำลองเสมือนจริง (3D)',
-                aiTools: 'แบบจำลอง 3D, แท็บเล็ต',
+                teacherId: 3, supervisorId: 2, coSupervisor: 'ผอ. สมเกียรติ ยอดเยี่ยม',
+                classLevel: 'ป.6', room: '1', subject: 'ภาษาไทย', topic: 'การอ่านจับใจความสำคัญ', 
+                paChallenge: 'การแก้ปัญหาการอ่านจับใจความด้วยนวัตกรรม AI',
+                aiTools: 'E-Learning, ChatGPT',
                 scores: [4, 3, 4, 3, 4, 3, 4, 4], 
-                strengths: 'ครูจัดสภาพแวดล้อมได้ดี เปิดโอกาสให้นักเรียนได้ใช้แท็บเล็ตสืบค้นและสร้างแบบจำลองร่วมกัน เกิดกระบวนการ Active Learning อย่างชัดเจน',
-                recommendations: 'สามารถนำรูปแบบการจัดกิจกรรมนี้ไปเป็นแนวปฏิบัติที่ดี (Best Practice) ในประเด็นท้าทาย เพื่อขยายผลสู่เพื่อนครูในระดับชั้นอื่นได้'
+                strengths: 'ครูจัดสภาพแวดล้อมได้ดี เปิดโอกาสให้นักเรียนได้ใช้สื่อสืบค้นและสร้างชิ้นงาน เกิดกระบวนการ Active Learning ชัดเจน',
+                recommendations: 'สามารถนำรูปแบบการจัดกิจกรรมนี้ไปเป็นแนวปฏิบัติที่ดี (Best Practice) ในประเด็นท้าทาย เพื่อขยายผลสู่เพื่อนครูได้'
             }
         ];
 
-        // ตัวแปรสถานะ
         let currentUser = null;
         let currentView = 'home';
         let charts = {};
         let currentCaptchaAnswer = 0;
 
-        // ตัวชี้วัด 8 ข้อ (ฉบับบูรณาการ เป็นกลาง ใช้ได้กับทุกรายวิชา)
+        // ตัวชี้วัด 8 ข้อ (เป็นกลาง ครอบคลุมทุกวิชา)
         const criteriaList = [
             { title: "1. ผู้เรียนสามารถเข้าถึงและเข้าใจบทเรียน", desc: "ครูใช้สื่อ/เทคโนโลยีเชื่อมโยงความรู้เดิม สู่การเรียนรู้ใหม่ได้อย่างน่าสนใจ" },
             { title: "2. ผู้เรียนสามารถเชื่อมโยงและแก้ปัญหา", desc: "จัดกิจกรรมให้ผู้เรียนเผชิญปัญหา ฝึกตั้งคำถาม และหาคำตอบด้วยกระบวนการที่เหมาะสม" },
-            { title: "3. ผู้เรียนสร้างความรู้ได้ด้วยตนเอง", desc: "ผู้เรียนได้ลงมือปฏิบัติ (Active Learning) สร้างสรรค์ชิ้นงาน/นวัตกรรมด้วยตนเอง" },
-            { title: "4. ผู้เรียนมีส่วนร่วมในการสื่อสารและสะท้อนคิด", desc: "มีการนำเสนอ แลกเปลี่ยนเรียนรู้ อภิปราย และวิพากษ์ผลงานอย่างมีเหตุผล" },
-            { title: "5. บรรยากาศการเรียนรู้ส่งเสริมการมีส่วนร่วม", desc: "สร้างสภาพแวดล้อมที่ปลอดภัย กระตุ้นการคิด และเปิดโอกาสให้ทุกคนมีส่วนร่วม" },
-            { title: "6. การจัดการเรียนรู้ตอบสนองความแตกต่าง", desc: "มีการยืดหยุ่น หรือใช้เทคโนโลยีช่วยเหลือเด็กกลุ่มช้า และท้าทายเด็กกลุ่มศักยภาพสูง" },
+            { title: "3. ผู้เรียนสร้างความรู้ได้ด้วยตนเอง", desc: "ผู้เรียนได้ลงมือปฏิบัติ (Active Learning) สร้างสรรค์ชิ้นงานด้วยตนเอง" },
+            { title: "4. ผู้เรียนมีส่วนร่วมในการสื่อสาร/สะท้อนคิด", desc: "มีการนำเสนอ แลกเปลี่ยนเรียนรู้ อภิปราย และวิพากษ์ผลงานอย่างมีเหตุผล" },
+            { title: "5. บรรยากาศส่งเสริมการมีส่วนร่วม", desc: "สร้างสภาพแวดล้อมที่ปลอดภัย กระตุ้นการคิด และเปิดโอกาสให้ทุกคนมีส่วนร่วม" },
+            { title: "6. การจัดการเรียนรู้ตอบสนองความแตกต่าง", desc: "ใช้ความยืดหยุ่นหรือเทคโนโลยีช่วยเหลือเด็กกลุ่มช้า และท้าทายเด็กกลุ่มศักยภาพสูง" },
             { title: "7. การวัดประเมินผลและการให้ข้อมูลย้อนกลับ", desc: "ประเมินผลตามสภาพจริงระหว่างเรียน พร้อมให้ Feedback เพื่อพัฒนาอย่างต่อเนื่อง" },
-            { title: "8. การกำกับการเรียนรู้และผลลัพธ์ของผู้เรียน", desc: "ผลงานสะท้อนทักษะศตวรรษที่ 21 สอดคล้องกับ 'ประเด็นท้าทาย' ที่ระบุไว้ใน ว PA" }
+            { title: "8. การกำกับการเรียนรู้และผลลัพธ์ของผู้เรียน", desc: "ผลงานสะท้อนทักษะในศตวรรษที่ 21 สอดคล้องกับ 'ประเด็นท้าทาย (ว PA)'" }
         ];
 
         window.onload = () => {
@@ -625,12 +597,20 @@
             checkSession();
         };
 
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
         function navigate(viewId) {
             ['home', 'dashboard', 'form', 'report', 'admin'].forEach(id => {
                 document.getElementById(`view-${id}`).classList.add('hidden');
             });
             document.getElementById(`view-${viewId}`).classList.remove('hidden');
             currentView = viewId;
+            
+            document.getElementById('mobile-menu').classList.add('hidden');
+            window.scrollTo(0, 0);
 
             if (viewId === 'dashboard') renderDashboard();
             if (viewId === 'report') renderReport();
@@ -641,6 +621,7 @@
         function showLogin() { 
             document.getElementById('login-username').value = '';
             document.getElementById('login-password').value = '';
+            document.getElementById('mobile-menu').classList.add('hidden');
             generateCaptcha();
             document.getElementById('modal-login').classList.remove('hidden'); 
         }
@@ -658,7 +639,7 @@
             e.preventDefault();
             const captchaInput = parseInt(document.getElementById('login-captcha').value);
             if (captchaInput !== currentCaptchaAnswer) {
-                Swal.fire('ข้อผิดพลาด', 'คำตอบป้องกันสแปมไม่ถูกต้อง กรุณาลองใหม่', 'warning');
+                Swal.fire('ข้อผิดพลาด', 'คำตอบเลขป้องกันสแปมไม่ถูกต้อง กรุณาลองใหม่', 'warning');
                 generateCaptcha();
                 return;
             }
@@ -686,6 +667,7 @@
             currentUser = null;
             updateUIForUser();
             navigate('home');
+            document.getElementById('mobile-menu').classList.add('hidden');
         }
 
         function checkSession() { updateUIForUser(); }
@@ -698,9 +680,14 @@
             const btnForm = document.getElementById('btn-nav-form');
             const btnAdmin = document.getElementById('btn-nav-admin');
 
-            // แสดงเมนูพื้นฐานเสมอเพื่อให้บุคคลทั่วไปกดสลับไปมาได้
+            const mobileUserInfo = document.getElementById('mobile-user-info');
+            const mobileBtnLogin = document.getElementById('mobile-btn-login');
+            const mobileBtnLogout = document.getElementById('mobile-btn-logout');
+            const mobileBtnForm = document.getElementById('mobile-btn-nav-form');
+            const mobileBtnAdmin = document.getElementById('mobile-btn-nav-admin');
+
             navLinks.classList.remove('hidden');
-            navLinks.classList.add('flex');
+            navLinks.classList.add('md:flex');
 
             if (currentUser) {
                 btnLogin.classList.add('hidden');
@@ -708,19 +695,32 @@
                 userInfo.classList.remove('hidden');
                 document.getElementById('display-name').textContent = currentUser.name;
                 
+                mobileBtnLogin.classList.add('hidden');
+                mobileBtnLogout.classList.remove('hidden');
+                mobileUserInfo.classList.remove('hidden');
+                document.getElementById('mobile-display-name').textContent = currentUser.name;
+
                 let roleTh = currentUser.role === 'admin' ? 'แอดมิน' : (currentUser.role === 'supervisor' ? 'ผู้นิเทศ' : 'ครูผู้สอน');
                 document.getElementById('display-role').textContent = roleTh;
+                document.getElementById('mobile-display-role').textContent = roleTh;
 
                 btnForm.classList.toggle('hidden', currentUser.role !== 'supervisor');
+                mobileBtnForm.classList.toggle('hidden', currentUser.role !== 'supervisor');
+                
                 btnAdmin.classList.toggle('hidden', currentUser.role !== 'admin');
+                mobileBtnAdmin.classList.toggle('hidden', currentUser.role !== 'admin');
             } else {
                 btnLogin.classList.remove('hidden');
                 btnLogout.classList.add('hidden');
                 userInfo.classList.add('hidden');
-                
-                // ซ่อนเมนูที่ต้องใช้สิทธิ์
                 btnForm.classList.add('hidden');
                 btnAdmin.classList.add('hidden');
+                
+                mobileBtnLogin.classList.remove('hidden');
+                mobileBtnLogout.classList.add('hidden');
+                mobileUserInfo.classList.add('hidden');
+                mobileBtnForm.classList.add('hidden');
+                mobileBtnAdmin.classList.add('hidden');
             }
         }
 
@@ -743,73 +743,87 @@
 
             dbSupervisions.forEach(s => {
                 const docScore = s.scores.reduce((a,b)=>a+b, 0);
-                sumScores += (docScore / 32) * 4; // แปลงคะแนนเต็ม 32 เป็น 4.00
-                s.scores.forEach((sc, idx) => criteriaSum[idx] += sc);
+                sumScores += (docScore / 32) * 4; 
+                s.scores.forEach((sc, idx) => { criteriaSum[idx] += (sc / 4) * 100; });
+                
                 if (s.aiTools && s.aiTools.trim() !== '') aiUsage['บูรณาการสื่อ/เทคโนโลยี']++;
                 else aiUsage['จัดการเรียนรู้แบบเดิม']++;
             });
 
-            const avgScore = totalSups > 0 ? (sumScores / totalSups).toFixed(2) : "0.00";
-            
             document.getElementById('stat-total-sups').textContent = totalSups;
-            document.getElementById('stat-supervised-teachers').textContent = supervisedCount + " คน";
-            document.getElementById('stat-pending-teachers').textContent = pendingCount + " คน";
-            document.getElementById('stat-avg-score').textContent = avgScore;
+            document.getElementById('stat-supervised-teachers').textContent = supervisedCount;
+            document.getElementById('stat-pending-teachers').textContent = pendingCount;
+            document.getElementById('stat-avg-score').textContent = totalSups > 0 ? (sumScores / totalSups).toFixed(2) : "0.00";
 
-            buildCharts(criteriaSum, totalSups, aiUsage);
-        }
-
-        function buildCharts(criteriaSum, totalSups, aiUsage) {
-            const radarData = criteriaSum.map(val => totalSups > 0 ? (val/(totalSups * 4))*100 : 0);
             if (charts.radar) charts.radar.destroy();
             if (charts.pie) charts.pie.destroy();
 
-            const ctxRadar = document.getElementById('radarChart').getContext('2d');
-            charts.radar = new Chart(ctxRadar, {
+            const avgCriteria = totalSups > 0 ? criteriaSum.map(sum => sum / totalSups) : Array(8).fill(0);
+            const rCtx = document.getElementById('radarChart').getContext('2d');
+            charts.radar = new Chart(rCtx, {
                 type: 'radar',
                 data: {
-                    labels: criteriaList.map(c => `ตัวชี้วัดที่ ${c.title.split('.')[0]}`),
-                    datasets: [{
-                        label: 'ร้อยละความสำเร็จตามมาตรฐาน ว PA',
-                        data: radarData,
-                        backgroundColor: 'rgba(15, 118, 110, 0.2)',
-                        borderColor: 'rgba(15, 118, 110, 1)',
-                        pointBackgroundColor: 'rgba(15, 118, 110, 1)',
-                        borderWidth: 2
-                    }]
+                    labels: ['1.เข้าถึงเนื้อหา', '2.แก้ปัญหา', '3.สร้างความรู้เอง', '4.สะท้อนคิด', '5.บรรยากาศ', '6.ความแตกต่าง', '7.ประเมินผล', '8.ผลลัพธ์'],
+                    datasets: [{ label: 'คะแนนเฉลี่ย (%)', data: avgCriteria, backgroundColor: 'rgba(30, 58, 138, 0.2)', borderColor: '#1e3a8a', pointBackgroundColor: '#f59e0b' }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, scales: { r: { min: 0, max: 100, ticks: { stepSize: 20 } } }, plugins: { legend: { position: 'bottom' } } }
+                options: { responsive: true, maintainAspectRatio: false, scales: { r: { min: 0, max: 100, ticks: { stepSize: 20 } } } }
             });
 
-            const ctxPie = document.getElementById('pieChart').getContext('2d');
-            charts.pie = new Chart(ctxPie, {
+            const pCtx = document.getElementById('pieChart').getContext('2d');
+            charts.pie = new Chart(pCtx, {
                 type: 'doughnut',
                 data: {
                     labels: Object.keys(aiUsage),
-                    datasets: [{ data: Object.values(aiUsage), backgroundColor: ['#3b82f6', '#e5e7eb'], borderWidth: 0 }]
+                    datasets: [{ data: Object.values(aiUsage), backgroundColor: ['#0f766e', '#cbd5e1'] }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
         function generateFormCriteria() {
-            const tbody = document.getElementById('criteria-table-body');
-            tbody.innerHTML = '';
+            const container = document.getElementById('criteria-container');
+            if(!container) return;
+            container.innerHTML = '';
             
             criteriaList.forEach((item, index) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="border p-3">
-                        <div class="font-bold text-gray-800">${item.title}</div>
-                        <div class="text-xs text-gray-500 mt-1"><i class="fa-solid fa-caret-right text-teal-600 mr-1"></i> ${item.desc}</div>
-                    </td>
-                    <td class="border p-3 text-center"><input type="radio" name="criteria_${index}" value="4" class="w-4 h-4 text-primary focus:ring-primary" required></td>
-                    <td class="border p-3 text-center"><input type="radio" name="criteria_${index}" value="3" class="w-4 h-4 text-primary focus:ring-primary" required></td>
-                    <td class="border p-3 text-center"><input type="radio" name="criteria_${index}" value="2" class="w-4 h-4 text-primary focus:ring-primary" required></td>
-                    <td class="border p-3 text-center"><input type="radio" name="criteria_${index}" value="1" class="w-4 h-4 text-primary focus:ring-primary" required></td>
-                    <td class="border p-3 text-center"><input type="radio" name="criteria_${index}" value="0" class="w-4 h-4 text-primary focus:ring-primary" required></td>
+                const card = document.createElement('div');
+                card.className = 'bg-white border border-gray-200 rounded-xl p-4 hover:border-primary transition shadow-sm flex flex-col';
+                card.innerHTML = `
+                    <div class="mb-3 flex-grow">
+                        <div class="font-bold text-gray-800 text-sm md:text-base mb-1">${item.title}</div>
+                        <div class="text-xs md:text-sm text-gray-500"><i class="fa-solid fa-caret-right text-teal-600 mr-1"></i> ${item.desc}</div>
+                    </div>
+                    <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 mt-auto overflow-x-auto">
+                        <div class="flex justify-between items-center min-w-[250px] w-full radio-score">
+                            <label class="flex flex-col items-center cursor-pointer p-1.5 md:p-2 w-1/5 hover:bg-blue-100 rounded transition">
+                                <span class="text-[9px] md:text-[10px] font-bold text-primary mb-1">ดีเยี่ยม</span>
+                                <input type="radio" name="criteria_${index}" value="4" class="accent-primary" required>
+                                <span class="text-xs md:text-sm font-bold mt-1">4</span>
+                            </label>
+                            <label class="flex flex-col items-center cursor-pointer p-1.5 md:p-2 w-1/5 hover:bg-teal-100 rounded transition">
+                                <span class="text-[9px] md:text-[10px] font-bold text-teal-600 mb-1">ดี</span>
+                                <input type="radio" name="criteria_${index}" value="3" class="accent-teal-600" required>
+                                <span class="text-xs md:text-sm font-bold mt-1">3</span>
+                            </label>
+                            <label class="flex flex-col items-center cursor-pointer p-1.5 md:p-2 w-1/5 hover:bg-yellow-100 rounded transition">
+                                <span class="text-[9px] md:text-[10px] font-bold text-yellow-600 mb-1">พอใช้</span>
+                                <input type="radio" name="criteria_${index}" value="2" class="accent-yellow-600" required>
+                                <span class="text-xs md:text-sm font-bold mt-1">2</span>
+                            </label>
+                            <label class="flex flex-col items-center cursor-pointer p-1.5 md:p-2 w-1/5 hover:bg-orange-100 rounded transition">
+                                <span class="text-[9px] md:text-[10px] font-bold text-orange-500 mb-1">ปรับปรุง</span>
+                                <input type="radio" name="criteria_${index}" value="1" class="accent-orange-500" required>
+                                <span class="text-xs md:text-sm font-bold mt-1">1</span>
+                            </label>
+                            <label class="flex flex-col items-center cursor-pointer p-1.5 md:p-2 w-1/5 hover:bg-gray-200 rounded transition">
+                                <span class="text-[9px] md:text-[10px] font-bold text-gray-500 mb-1">ไม่ชัดเจน</span>
+                                <input type="radio" name="criteria_${index}" value="0" class="accent-gray-500" required>
+                                <span class="text-xs md:text-sm font-bold mt-1">0</span>
+                            </label>
+                        </div>
+                    </div>
                 `;
-                tbody.appendChild(tr);
+                container.appendChild(card);
             });
         }
 
@@ -878,9 +892,10 @@
                 recommendations: document.getElementById('form-recommendations').value
             };
 
+            // MOCK SAVE - To connect to GAS, replace with google.script.run
             dbSupervisions.push(newSup);
 
-            Swal.fire({ title: 'บันทึกสำเร็จ!', text: 'บันทึกข้อมูลการนิเทศและประเมิน ว PA เรียบร้อย', icon: 'success' }).then(() => {
+            Swal.fire({ title: 'บันทึกสำเร็จ!', text: 'บันทึกข้อมูลการนิเทศเรียบร้อยแล้ว', icon: 'success' }).then(() => {
                 navigate('report');
             });
         }
@@ -914,7 +929,7 @@
                             <td class="py-3 px-4">${s.date}</td>
                             <td class="py-3 px-4 font-medium text-gray-800">${teacher}</td>
                             <td class="py-3 px-4 text-gray-600">${supervisor}</td>
-                            <td class="py-3 px-4 text-gray-600 truncate max-w-xs" title="เรื่อง: ${s.topic}">${fullSubject}</td>
+                            <td class="py-3 px-4 text-gray-600 truncate max-w-[150px]" title="เรื่อง: ${s.topic}">${fullSubject}</td>
                             <td class="py-3 px-4 text-center"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${scoreSum}/32</span></td>
                             <td class="py-3 px-4 text-center">
                                 <button onclick="viewReportDetail('${s.id}')" class="text-primary hover:text-blue-800 bg-blue-50 p-1.5 rounded" title="ดูรายละเอียด"><i class="fa-solid fa-eye"></i></button>
@@ -927,7 +942,7 @@
 
             const actionArea = document.getElementById('report-action-area');
             if (currentUser && currentUser.role === 'supervisor') {
-                actionArea.innerHTML = `<button onclick="navigate('form')" class="bg-secondary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-teal-700 transition"><i class="fa-solid fa-plus mr-1"></i> นิเทศและประเมิน ว PA</button>`;
+                actionArea.innerHTML = `<button onclick="navigate('form')" class="bg-secondary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-teal-700 transition"><i class="fa-solid fa-plus mr-1"></i> เพิ่มการนิเทศ</button>`;
             } else {
                 actionArea.innerHTML = '';
             }
@@ -941,11 +956,11 @@
             const coSupervisorHtml = data.coSupervisor ? `<p><strong>ผู้ร่วมนิเทศ:</strong> <span class="text-gray-700">${data.coSupervisor}</span></p>` : '';
             const scoreSum = data.scores.reduce((a,b)=>a+b, 0);
 
-            let scoresHtml = '<table class="w-full text-xs text-left mt-2 mb-3 border"><thead><tr class="bg-gray-100"><th class="p-1 border">ตัวชี้วัด (ว PA ด้านที่ 1)</th><th class="p-1 border text-center w-12">คะแนน</th></tr></thead><tbody>';
+            let scoresHtml = '<div class="overflow-x-auto"><table class="w-full text-xs text-left mt-2 mb-3 border"><thead><tr class="bg-gray-100"><th class="p-2 border">ตัวชี้วัด (ว PA ด้านที่ 1)</th><th class="p-2 border text-center w-12">คะแนน</th></tr></thead><tbody>';
             data.scores.forEach((sc, idx) => {
-                scoresHtml += `<tr><td class="p-1 border truncate max-w-[200px]" title="${criteriaList[idx].title}">${criteriaList[idx].title}</td><td class="p-1 border text-center font-bold text-primary">${sc}</td></tr>`;
+                scoresHtml += `<tr><td class="p-2 border truncate max-w-[200px]" title="${criteriaList[idx].title}">${criteriaList[idx].title}</td><td class="p-2 border text-center font-bold text-primary">${sc}</td></tr>`;
             });
-            scoresHtml += '</tbody></table>';
+            scoresHtml += '</tbody></table></div>';
 
             Swal.fire({
                 title: 'ผลการนิเทศและประเมิน ว PA',
@@ -965,8 +980,8 @@
                         ${scoresHtml}
                         <p class="text-secondary font-bold">จุดเด่นที่พบ (Strengths):</p>
                         <p class="bg-gray-50 p-2 rounded border">${data.strengths || '-'}</p>
-                        <p class="text-orange-600 font-bold mt-2">ข้อเสนอแนะสู่ประเด็นท้าทาย (Challenge):</p>
-                        <p class="bg-gray-50 p-2 rounded border">${data.recommendations || '-'}</p>
+                        <p class="text-purple-700 font-bold mt-2">ข้อเสนอแนะสู่ประเด็นท้าทาย (Challenge):</p>
+                        <p class="bg-gray-50 p-2 rounded border whitespace-pre-wrap">${data.recommendations || '-'}</p>
                     </div>
                 `,
                 confirmButtonColor: '#1e3a8a',
@@ -991,12 +1006,12 @@
 
             dbUsers.forEach(u => {
                 let roleTh = u.role === 'admin' ? 'แอดมิน' : (u.role === 'supervisor' ? 'ผู้นิเทศ' : 'ครูผู้สอน');
-                let statusBadge = u.status === 'active' ? '<span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-bold">Active</span>' : '<span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-bold">Suspended</span>';
+                let statusBadge = u.status === 'active' ? '<span class="px-2 py-1 bg-green-100 text-green-800 rounded text-[10px] md:text-xs font-bold">Active</span>' : '<span class="px-2 py-1 bg-red-100 text-red-800 rounded text-[10px] md:text-xs font-bold">Suspended</span>';
                 
                 tbody.innerHTML += `
-                    <tr>
-                        <td class="py-3 px-4"><div class="font-bold text-gray-800">${u.username}</div><div class="text-xs text-gray-500">ID: ${u.id}</div></td>
-                        <td class="py-3 px-4">${u.name}</td>
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 px-4"><div class="font-bold text-gray-800">${u.username}</div></td>
+                        <td class="py-3 px-4 truncate max-w-[120px]">${u.name}</td>
                         <td class="py-3 px-4">${roleTh}</td>
                         <td class="py-3 px-4 text-center">${statusBadge}</td>
                         <td class="py-3 px-4 text-center">
@@ -1040,14 +1055,14 @@
             const password = document.getElementById('admin-password').value;
             const name = document.getElementById('admin-name').value;
             const role = document.getElementById('admin-role').value;
-
+            
             if (id) {
                 const idx = dbUsers.findIndex(x => x.id == id);
                 dbUsers[idx] = { ...dbUsers[idx], username, password, name, role };
                 Swal.fire('สำเร็จ', 'แก้ไขข้อมูลเรียบร้อย', 'success');
             } else {
                 if(dbUsers.find(x => x.username === username)) { Swal.fire('ข้อผิดพลาด', 'Username นี้มีในระบบแล้ว', 'error'); return; }
-                const newId = Math.max(...dbUsers.map(u => u.id)) + 1;
+                const newId = dbUsers.length > 0 ? Math.max(...dbUsers.map(u => u.id)) + 1 : 1;
                 dbUsers.push({ id: newId, username, password, name, role, status: 'active' });
                 Swal.fire('สำเร็จ', 'เพิ่มผู้ใช้เรียบร้อย', 'success');
             }
@@ -1080,7 +1095,7 @@
             const phase = document.getElementById('form-empower-phase').value;
 
             if (!topic || !strengths || !finalSubject) {
-                Swal.fire('ข้อมูลไม่เพียงพอ', 'กรุณาระบุ "กลุ่มสาระฯ/วิชา", "เรื่อง/หน่วยการเรียนรู้" และ "จุดเด่นที่พบ" ก่อนให้ AI ช่วยร่างข้อเสนอแนะ', 'warning');
+                Swal.fire('ข้อมูลไม่เพียงพอ', 'กรุณาระบุ "กลุ่มสาระฯ", "เรื่อง/หน่วย" และ "จุดเด่นที่พบ" ก่อนให้ AI ช่วยร่างข้อเสนอแนะ', 'warning');
                 return;
             }
 
@@ -1095,11 +1110,10 @@
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> กำลังวิเคราะห์...';
             btn.disabled = true;
 
-            // System Prompt แบบบูรณาการ กลาง ใช้ได้ทุกวิชา เน้นเข้าสู่ประเด็นท้าทาย ว PA
-            const systemPrompt = "คุณคือ 'ศึกษานิเทศก์ระดับจังหวัด' ผู้เชี่ยวชาญด้านการจัดการเรียนรู้เชิงรุก (Active Learning) การปฏิบัติตามมาตรฐานตำแหน่ง และการประเมินวิทยฐานะ (ว PA) คุณกำลังใช้กระบวนการ 'นิเทศแบบเสริมพลัง (Empowerment Supervision)' หน้าที่ของคุณคือการให้ข้อเสนอแนะเชิงบวกแก่ครู (Empower) โดยชื่นชมจุดเด่น และให้คำแนะนำที่เชื่อมโยง 'การปฏิบัติตามมาตรฐานตำแหน่ง' เข้าสู่ 'ประเด็นท้าทาย (Challenge Issue)' ของครูได้อย่างเป็นรูปธรรม ให้คำแนะนำที่สอดคล้องกับวิชาและระดับชั้นที่สอน ไม่เกิน 4 บรรทัด ใช้ภาษาทางการและสร้างแรงบันดาลใจ";
-            const userQuery = `ข้อมูลการนิเทศ: ระยะ ${phase}, ระดับชั้น: ${classLevel}, วิชา: ${finalSubject}, เรื่อง: ${topic}, ประเด็นท้าทายของครู: ${paChallenge || 'ไม่ได้ระบุ'}, สื่อเทคโนโลยี/นวัตกรรมที่ใช้: ${aiTools || 'ไม่ได้ระบุ'}, คะแนนประเมินรวม 8 ตัวชี้วัด: ${totalScore}/32, จุดเด่นที่ครูทำได้ดี: ${strengths}. โปรดร่างข้อเสนอแนะเพื่อพัฒนาต่อยอดการปฏิบัติตามมาตรฐานตำแหน่ง และเชื่อมโยงสู่ประเด็นท้าทาย (ว PA)`;
+            const systemPrompt = "คุณคือ 'ศึกษานิเทศก์ระดับจังหวัด' ผู้เชี่ยวชาญด้านการจัดการเรียนรู้เชิงรุก (Active Learning) และการประเมินวิทยฐานะ (ว PA) หน้าที่ของคุณคือใช้กระบวนการ 'นิเทศแบบเสริมพลัง (Empowerment)' ให้ข้อเสนอแนะเชิงบวก ชื่นชมจุดเด่น และให้คำแนะนำที่เชื่อมโยงเข้าสู่ 'ประเด็นท้าทาย (Challenge Issue)' ของครูอย่างเป็นรูปธรรม ให้คำแนะนำที่สอดคล้องกับวิชาที่สอน ความยาวไม่เกิน 4 บรรทัด ใช้ภาษาทางการและสร้างแรงบันดาลใจ";
+            const userQuery = `ข้อมูลการนิเทศ: ระยะ ${phase}, ชั้น: ${classLevel}, วิชา: ${finalSubject}, เรื่อง: ${topic}, ประเด็นท้าทายของครู: ${paChallenge || 'ไม่ได้ระบุ'}, สื่อ/AI ที่ใช้: ${aiTools || 'ไม่ได้ระบุ'}, คะแนนประเมินรวม: ${totalScore}/32, จุดเด่นที่ครูทำได้ดี: ${strengths}. โปรดร่างข้อเสนอแนะเพื่อพัฒนาต่อยอดและเชื่อมโยงสู่ประเด็นท้าทาย (ว PA)`;
 
-            const apiKey = ""; // API Key ถูกจัดการโดย Canvas โดยอัตโนมัติ
+            const apiKey = ""; // API Key handled by environment
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
 
             const payload = {
@@ -1117,11 +1131,11 @@
                     if (recElement.value.trim() === '') recElement.value = aiText.trim();
                     else recElement.value += '\n\n[✨ AI Suggestion สู่ประเด็นท้าทาย]:\n' + aiText.trim();
                     
-                    Swal.fire({ title: 'AI ร่างข้อเสนอแนะสำเร็จ!', text: 'คุณสามารถปรับแก้ข้อความเพิ่มเติมได้ตามความเหมาะสมเพื่อใช้เป็นข้อมูลสะท้อนคิด', icon: 'success', timer: 3000, showConfirmButton: false });
+                    Swal.fire({ title: 'AI ร่างข้อเสนอแนะสำเร็จ!', text: 'คุณสามารถปรับแก้ข้อความเพิ่มเติมได้ตามความเหมาะสม', icon: 'success', timer: 2000, showConfirmButton: false });
                 } else { throw new Error("โครงสร้างข้อมูลจาก Gemini API ไม่ถูกต้อง"); }
             } catch (error) {
                 console.error("AI Generation Error:", error);
-                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อ AI ได้ในขณะนี้ โปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองอีกครั้ง', 'error');
+                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อ AI ได้ในขณะนี้', 'error');
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
