@@ -3,623 +3,767 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบนิเทศชั้นเรียนออนไลน์ (ว PA + AI)</title>
+    <title>ระบบนิเทศออนไลน์ ตามแนวทาง ว PA</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Fonts: Noto Sans Thai -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- SweetAlert2 (แทน alert) -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <!-- Chart.js สำหรับสถิติ -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .hide { display: none !important; }
+        /* พื้นหลัง CAPTCHA กวนบอท */
+        .captcha-box { background-image: url('data:image/svg+xml;utf8,<svg width="100" height="40" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="40" fill="%23f3f4f6"/><path d="M0 10 L100 30 M0 30 L100 10 M20 0 L80 40" stroke="%23cbd5e1" stroke-width="2"/></svg>'); }
+    </style>
+    
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['"Noto Sans Thai"', 'sans-serif'],
-                    },
-                    colors: {
-                        primary: '#1e3a8a', // blue-900
-                        secondary: '#0f766e', // teal-700
-                    }
+                    colors: { primary: '#1e3a8a', secondary: '#0f766e', accent: '#f59e0b' }
                 }
             }
         }
     </script>
-    <style>
-        body { font-family: 'Noto Sans Thai', sans-serif; background-color: #f3f4f6; }
-        .page { display: none; }
-        .page.active { display: block; }
-        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-    </style>
 </head>
-<body class="text-gray-800 h-screen flex overflow-hidden">
+<body class="text-gray-800 h-screen flex flex-col">
 
-    <!-- Sidebar Navigation -->
-    <aside id="sidebar" class="bg-primary text-white w-64 flex-shrink-0 hidden md:flex flex-col transition-all duration-300">
-        <div class="p-6 border-b border-blue-800 text-center">
-            <i class="fa-solid fa-chalkboard-user text-4xl mb-2"></i>
-            <h1 class="text-xl font-bold tracking-wide">EduSupervision</h1>
-            <p class="text-xs text-blue-300 mt-1">ระบบนิเทศ ว PA + AI</p>
-        </div>
-        
-        <div class="p-4">
-            <div id="userInfo" class="bg-blue-800 rounded-lg p-3 mb-4 hidden">
-                <p class="text-sm text-blue-200">เข้าสู่ระบบโดย:</p>
-                <p id="userNameDisplay" class="font-semibold"></p>
-                <span id="userRoleBadge" class="inline-block mt-1 px-2 py-1 text-xs font-bold rounded-full bg-secondary"></span>
-            </div>
-        </div>
-
-        <nav class="flex-1 px-4 space-y-2 overflow-y-auto">
-            <!-- เมนูทั่วไป (ทุกคนเห็น) -->
-            <a href="#" onclick="navigate('dashboard')" class="nav-item block px-4 py-2.5 rounded-lg hover:bg-blue-800 transition"><i class="fa-solid fa-chart-pie w-6"></i> แดชบอร์ด & สถิติ</a>
-            <a href="#" onclick="navigate('reports')" class="nav-item block px-4 py-2.5 rounded-lg hover:bg-blue-800 transition"><i class="fa-solid fa-file-lines w-6"></i> รายงานการนิเทศ</a>
-            
-            <!-- เมนูครู -->
-            <div id="menu-teacher" class="hidden">
-                <p class="px-4 pt-4 pb-2 text-xs font-semibold text-blue-300 uppercase tracking-wider">สำหรับครูผู้สอน</p>
-                <a href="#" onclick="navigate('schedule-teacher')" class="nav-item block px-4 py-2.5 rounded-lg hover:bg-blue-800 transition"><i class="fa-regular fa-calendar-check w-6"></i> ขอนับรับการนิเทศ</a>
-                <a href="#" onclick="navigate('my-reports')" class="nav-item block px-4 py-2.5 rounded-lg hover:bg-blue-800 transition"><i class="fa-solid fa-clipboard-user w-6"></i> ผลการนิเทศของฉัน</a>
-            </div>
-
-            <!-- เมนูผู้นิเทศ -->
-            <div id="menu-supervisor" class="hidden">
-                <p class="px-4 pt-4 pb-2 text-xs font-semibold text-blue-300 uppercase tracking-wider">สำหรับผู้นิเทศ</p>
-                <a href="#" onclick="navigate('schedule-supervisor')" class="nav-item block px-4 py-2.5 rounded-lg hover:bg-blue-800 transition"><i class="fa-solid fa-calendar-days w-6"></i> กำหนดตารางนิเทศ</a>
-                <a href="#" onclick="navigate('supervision-form')" class="nav-item block px-4 py-2.5 rounded-lg hover:bg-blue-800 transition"><i class="fa-solid fa-pen-to-square w-6"></i> บันทึกผลการนิเทศ</a>
-            </div>
-
-            <!-- เมนูผู้ดูแลระบบ -->
-            <div id="menu-admin" class="hidden">
-                <p class="px-4 pt-4 pb-2 text-xs font-semibold text-blue-300 uppercase tracking-wider">ผู้ดูแลระบบ</p>
-                <a href="#" onclick="navigate('admin-users')" class="nav-item block px-4 py-2.5 rounded-lg hover:bg-blue-800 transition"><i class="fa-solid fa-users-gear w-6"></i> จัดการผู้ใช้งาน</a>
-                <a href="#" onclick="navigate('admin-settings')" class="nav-item block px-4 py-2.5 rounded-lg hover:bg-blue-800 transition"><i class="fa-solid fa-gear w-6"></i> ตั้งค่าระบบ</a>
-            </div>
-        </nav>
-
-        <div class="p-4 border-t border-blue-800">
-            <button id="btnLogin" onclick="navigate('login')" class="w-full bg-white text-primary font-bold py-2 px-4 rounded-lg hover:bg-gray-100 transition shadow">
-                <i class="fa-solid fa-right-to-bracket mr-2"></i> เข้าสู่ระบบ
-            </button>
-            <button id="btnLogout" onclick="logout()" class="hidden w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition shadow">
-                <i class="fa-solid fa-right-from-bracket mr-2"></i> ออกจากระบบ
-            </button>
-        </div>
-    </aside>
-
-    <!-- Main Content Area -->
-    <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
-        <!-- Mobile Header -->
-        <header class="md:hidden bg-primary text-white p-4 flex justify-between items-center shadow-md">
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-chalkboard-user text-2xl"></i>
-                <h1 class="text-lg font-bold">EduSupervision</h1>
-            </div>
-            <button onclick="toggleMobileMenu()" class="text-2xl focus:outline-none">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-        </header>
-
-        <!-- Page Container -->
-        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 md:p-8">
-            
-            <!-- ================= PAGE: LOGIN ================= -->
-            <div id="page-login" class="page max-w-md mx-auto mt-10">
-                <div class="bg-white rounded-2xl shadow-xl p-8 border-t-4 border-primary">
-                    <div class="text-center mb-8">
-                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-primary mb-4">
-                            <i class="fa-solid fa-lock text-3xl"></i>
-                        </div>
-                        <h2 class="text-2xl font-bold text-gray-800">เข้าสู่ระบบ</h2>
-                        <p class="text-gray-500 text-sm mt-1">กรุณาระบุข้อมูลเพื่อเข้าใช้งานระบบนิเทศ</p>
-                    </div>
-                    
-                    <form id="loginForm" onsubmit="handleLogin(event)">
-                        <div class="mb-4">
-                            <label class="block text-gray-700 text-sm font-bold mb-2" for="username">ชื่อผู้ใช้งาน (Username)</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <i class="fa-regular fa-user text-gray-400"></i>
-                                </div>
-                                <input class="appearance-none border rounded-lg w-full py-3 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="username" type="text" placeholder="ระบุชื่อผู้ใช้งาน" required>
-                            </div>
-                        </div>
-                        <div class="mb-6">
-                            <label class="block text-gray-700 text-sm font-bold mb-2" for="password">รหัสผ่าน (Password)</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <i class="fa-solid fa-key text-gray-400"></i>
-                                </div>
-                                <input class="appearance-none border rounded-lg w-full py-3 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="password" type="password" placeholder="ระบุรหัสผ่าน" required>
-                            </div>
-                        </div>
-                        <button class="w-full bg-primary hover:bg-blue-800 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md" type="submit">
-                            เข้าสู่ระบบ
-                        </button>
-                    </form>
-                    
-                    <div class="mt-6 bg-gray-50 p-4 rounded-lg text-sm text-gray-600 border border-gray-200">
-                        <p class="font-bold mb-2">บัญชีสำหรับทดสอบ (Demo Accounts):</p>
-                        <ul class="list-disc pl-5 space-y-1">
-                            <li>Admin: <code class="bg-gray-200 px-1 rounded">admin</code> / <code class="bg-gray-200 px-1 rounded">1234</code></li>
-                            <li>ผู้นิเทศ (ศน.): <code class="bg-gray-200 px-1 rounded">sn01</code> / <code class="bg-gray-200 px-1 rounded">1234</code></li>
-                            <li>ครูผู้สอน: <code class="bg-gray-200 px-1 rounded">teacher01</code> / <code class="bg-gray-200 px-1 rounded">1234</code></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ================= PAGE: DASHBOARD ================= -->
-            <div id="page-dashboard" class="page active">
-                <div class="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-800">แดชบอร์ดภาพรวมการนิเทศ</h2>
-                        <p class="text-gray-500">สถิติการจัดการเรียนรู้บูรณาการ AI ตามเกณฑ์ ว PA</p>
-                    </div>
-                    <button onclick="renderDashboard()" class="p-2 bg-white rounded shadow text-gray-600 hover:text-primary"><i class="fa-solid fa-rotate-right"></i></button>
+    <nav class="bg-primary text-white shadow-lg z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center cursor-pointer hover:text-blue-200 transition" onclick="navigate('home')" title="กลับหน้าหลัก">
+                    <i class="fa-solid fa-chalkboard-user text-2xl mr-3"></i>
+                    <span class="font-bold text-xl truncate">EduSupervision PA + AI Assistant</span>
                 </div>
                 
-                <!-- Stat Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                    <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-blue-500">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-                                <i class="fa-solid fa-chalkboard-user text-xl"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500 font-medium">ครูรับการนิเทศแล้ว</p>
-                                <p class="text-2xl font-bold text-gray-800" id="stat-teachers">12</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-teal-500">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-teal-100 text-teal-600 mr-4">
-                                <i class="fa-solid fa-file-signature text-xl"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500 font-medium">จำนวนครั้งที่นิเทศ</p>
-                                <p class="text-2xl font-bold text-gray-800" id="stat-supervisions">28</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-orange-500">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-orange-100 text-orange-600 mr-4">
-                                <i class="fa-solid fa-star text-xl"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500 font-medium">คะแนนเฉลี่ย (PA)</p>
-                                <p class="text-2xl font-bold text-gray-800" id="stat-avg-score">3.8/4.0</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-purple-500">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
-                                <i class="fa-solid fa-robot text-xl"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500 font-medium">แผนการสอนใช้ AI</p>
-                                <p class="text-2xl font-bold text-gray-800" id="stat-ai-plans">100%</p>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Navbar Links -->
+                <div id="nav-links" class="hidden md:flex items-center space-x-1">
+                    <button onclick="navigate('home')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-800 transition"><i class="fa-solid fa-house mr-1"></i> หน้าหลัก</button>
+                    <button onclick="navigate('dashboard')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-800 transition"><i class="fa-solid fa-chart-pie mr-1"></i> แดชบอร์ด</button>
+                    <button onclick="navigate('report')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-800 transition"><i class="fa-solid fa-file-lines mr-1"></i> รายงาน</button>
+                    <button id="btn-nav-form" onclick="navigate('form')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-800 transition hidden"><i class="fa-solid fa-pen-to-square mr-1"></i> บันทึกนิเทศ</button>
+                    <button id="btn-nav-admin" onclick="navigate('admin')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-800 transition hidden"><i class="fa-solid fa-users-gear mr-1"></i> จัดการระบบ</button>
                 </div>
 
-                <!-- Charts -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white rounded-xl shadow-sm p-5">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">ผลการประเมิน 8 ตัวชี้วัด (เฉลี่ย)</h3>
-                        <canvas id="radarChart" height="250"></canvas>
+                <div class="flex items-center">
+                    <div id="user-info" class="hidden mr-4 text-sm text-blue-200">
+                        <span id="display-name" class="font-bold text-white"></span> (<span id="display-role"></span>)
                     </div>
-                    <div class="bg-white rounded-xl shadow-sm p-5">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">จำนวนการนิเทศรายเดือน</h3>
-                        <canvas id="barChart" height="250"></canvas>
-                    </div>
+                    <button id="btn-login-modal" onclick="showLogin()" class="bg-accent hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow">เข้าสู่ระบบ</button>
+                    <button id="btn-logout" onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow hidden">ออกจากระบบ</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow overflow-y-auto p-4 sm:p-6 lg:p-8">
+        
+        <!-- View: Public Home (Default) - ปรับปรุงเป็นบริบทระดับจังหวัด กลาง บูรณาการ ว PA -->
+        <div id="view-home" class="max-w-6xl mx-auto py-10 fade-in">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl md:text-5xl font-bold text-primary mb-4">ระบบนิเทศออนไลน์(นิเทศเสริมพลัง)</h1>
+                <p class="text-lg md:text-xl text-gray-600">ยกระดับสมรรถนะการจัดการเรียนรู้เชิงรุก (Active Learning) ด้วยสื่อเทคโนโลยีและปัญญาประดิษฐ์ AI</p>
+                <p class="text-md text-teal-600 mt-2 font-semibold">เครือข่ายพัฒนาวิชาชีพศึกษานิเทศก์ ศธจ.นราธิวาส</p>
+            </div>
+
+            <!-- Role Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16 max-w-4xl mx-auto text-center">
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-500 hover:shadow-lg transition">
+                    <i class="fa-solid fa-magnifying-glass-chart text-4xl text-blue-500 mb-4"></i>
+                    <h3 class="font-bold text-lg mb-2">บุคคลทั่วไป</h3>
+                    <p class="text-sm text-gray-500">สามารถเข้าดูรายงานผลการนิเทศและสถิติภาพรวมได้โดยไม่ต้องล็อกอิน</p>
+                    <button onclick="navigate('report')" class="mt-4 text-blue-600 font-bold hover:underline">ดูรายงาน <i class="fa-solid fa-arrow-right text-xs"></i></button>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-teal-500 hover:shadow-lg transition">
+                    <i class="fa-solid fa-person-chalkboard text-4xl text-teal-500 mb-4"></i>
+                    <h3 class="font-bold text-lg mb-2">ครูผู้รับการนิเทศ</h3>
+                    <p class="text-sm text-gray-500">ล็อกอินเพื่อดูผลการประเมิน ข้อเสนอแนะ และสะท้อนคิดสู่ "ประเด็นท้าทาย"</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-accent hover:shadow-lg transition">
+                    <i class="fa-solid fa-clipboard-user text-4xl text-accent mb-4"></i>
+                    <h3 class="font-bold text-lg mb-2">ผู้นิเทศ/ผู้บริหาร</h3>
+                    <p class="text-sm text-gray-500">ล็อกอินเพื่อบันทึกผลการนิเทศ สังเกตชั้นเรียน และให้ข้อมูลย้อนกลับ</p>
                 </div>
             </div>
 
-            <!-- ================= PAGE: SUPERVISION FORM (ผู้นิเทศ) ================= -->
-            <div id="page-supervision-form" class="page max-w-4xl mx-auto">
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                    <div class="bg-primary p-6 text-white text-center">
-                        <h2 class="text-2xl font-bold">แบบบันทึกนิเทศชั้นเรียนเชิงสะท้อนคิด</h2>
-                        <p class="text-blue-200 mt-1">การจัดการเรียนรู้บูรณาการ AI สอดคล้องเกณฑ์ ว PA</p>
+            <!-- Knowledge Section: บูรณาการ ว PA และ Empowerment Supervision -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-primary p-6 text-white text-center">
+                    <h2 class="text-2xl font-bold"><i class="fa-solid fa-diagram-project text-yellow-300 mr-2"></i> กรอบแนวคิดการนิเทศแบบเสริมพลัง สู่การประเมินวิทยฐานะ (ว PA)</h2>
+                    <p class="text-blue-100 mt-2 text-sm">การเชื่อมโยงกระบวนการนิเทศ สู่การปฏิบัติตามมาตรฐานตำแหน่ง และการจัดทำประเด็นท้าทาย (Challenge Issues)</p>
+                </div>
+                
+                <div class="p-6 md:p-8">
+                    <!-- กระบวนการนิเทศ 5 ขั้นตอน -->
+                    <div class="mb-10">
+                        <div class="bg-blue-50 rounded-xl p-6 border border-blue-100 relative overflow-hidden">
+                            <h3 class="text-xl font-bold text-blue-800 mb-6 text-center">กระบวนการนิเทศแบบเสริมพลัง (Empowerment Supervision - Gibson, 1992)</h3>
+                            
+                            <div class="flex flex-col md:flex-row items-stretch justify-center gap-4">
+                                <!-- กล่อง 1: กระบวนการนิเทศ -->
+                                <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-primary w-full md:w-1/3 flex flex-col">
+                                    <h4 class="font-bold text-md text-primary mb-2 border-b pb-1">1. กระบวนการนิเทศ</h4>
+                                    <ul class="text-xs text-gray-600 space-y-1 list-disc pl-4 flex-grow">
+                                        <li>สร้างความสัมพันธ์เชิงบวก</li>
+                                        <li>วินิจฉัยระบุปัญหา / ความต้องการ</li>
+                                        <li>วางแผนพัฒนาร่วมกัน</li>
+                                        <li>ดำเนินการและการสนับสนุน (ใช้สื่อ/AI)</li>
+                                        <li>สะท้อนผลและปรับปรุงต่อเนื่อง</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="flex items-center justify-center">
+                                    <i class="fa-solid fa-arrow-right-long text-2xl text-blue-300 hidden md:block"></i>
+                                    <i class="fa-solid fa-arrow-down-long text-2xl text-blue-300 md:hidden my-2"></i>
+                                </div>
+                                
+                                <!-- กล่อง 2: มาตรฐานตำแหน่ง (ว PA) -->
+                                <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-secondary w-full md:w-1/3 flex flex-col">
+                                    <h4 class="font-bold text-md text-secondary mb-2 border-b pb-1">2. การปฏิบัติตามมาตรฐานตำแหน่ง</h4>
+                                    <p class="text-xs text-gray-600 mb-2">การพัฒนางานตามหลักเกณฑ์ ว PA</p>
+                                    <ul class="text-xs text-gray-600 space-y-1 list-disc pl-4 flex-grow">
+                                        <li>ด้านที่ 1: การจัดการเรียนรู้ (8 ตัวชี้วัด)</li>
+                                        <li>ด้านที่ 2: ผลลัพธ์การเรียนรู้ของผู้เรียน</li>
+                                        <li>บูรณาการเทคโนโลยี (AI) สู่ห้องเรียน Active Learning</li>
+                                    </ul>
+                                </div>
+
+                                <div class="flex items-center justify-center">
+                                    <i class="fa-solid fa-arrow-right-long text-2xl text-blue-300 hidden md:block"></i>
+                                    <i class="fa-solid fa-arrow-down-long text-2xl text-blue-300 md:hidden my-2"></i>
+                                </div>
+                                
+                                <!-- กล่อง 3: ประเด็นท้าทาย -->
+                                <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-accent w-full md:w-1/3 flex flex-col">
+                                    <h4 class="font-bold text-md text-yellow-600 mb-2 border-b pb-1">3. สู่ประเด็นท้าทาย (Challenge)</h4>
+                                    <p class="text-xs text-gray-600 mb-2">การนำผลการสะท้อนคิดไปต่อยอด:</p>
+                                    <ul class="text-xs text-gray-600 space-y-1 list-disc pl-4 flex-grow">
+                                        <li>ริเริ่ม พัฒนา นวัตกรรมการเรียนรู้</li>
+                                        <li>แก้ไขปัญหาผู้เรียนอย่างเป็นระบบ</li>
+                                        <li>สร้างผู้เรียนให้มีทักษะแห่งศตวรรษที่ 21 และความฉลาดทางดิจิทัล</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
-                    <form id="supervisionForm" onsubmit="submitSupervision(event)" class="p-6 md:p-8">
-                        <!-- ส่วนที่ 1: ข้อมูลพื้นฐาน -->
+                    <!-- ส่วนขยาย: การปฏิบัติตามมาตรฐานตำแหน่ง และ ประเด็นท้าทาย -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                        <div class="bg-blue-50/50 p-6 rounded-xl border border-blue-100 hover:shadow-md transition">
+                            <h3 class="text-lg font-bold text-primary mb-3 flex items-center"><i class="fa-solid fa-medal text-2xl mr-2"></i> การปฏิบัติตามมาตรฐานตำแหน่ง</h3>
+                            <p class="text-sm text-gray-600 mb-3">การประเมินประสิทธิภาพการปฏิบัติงานของครูตามหลักเกณฑ์ ว PA เพื่อให้สอดคล้องกับวิทยฐานะ ประกอบด้วย 3 ด้านหลัก:</p>
+                            <ul class="text-sm text-gray-700 space-y-2 list-none">
+                                <li><i class="fa-solid fa-check text-green-500 mr-1"></i> <strong>ด้านที่ 1: การจัดการเรียนรู้</strong> (เน้น 8 ตัวชี้วัด Active Learning)</li>
+                                <li><i class="fa-solid fa-check text-green-500 mr-1"></i> <strong>ด้านที่ 2: การส่งเสริมและสนับสนุน</strong> การจัดการเรียนรู้</li>
+                                <li><i class="fa-solid fa-check text-green-500 mr-1"></i> <strong>ด้านที่ 3: การพัฒนาตนเอง</strong> และพัฒนาวิชาชีพ (PLC)</li>
+                            </ul>
+                            <div class="mt-4 p-3 bg-white rounded border border-blue-200 text-xs text-blue-800">
+                                * ระบบนิเทศออนไลน์นี้ มุ่งเน้นการเก็บร่องรอยเชิงประจักษ์ใน <strong>ด้านที่ 1</strong> เพื่อใช้เป็นหลักฐานประกอบการประเมินในระบบ DPA
+                            </div>
+                        </div>
+                        
+                        <div class="bg-yellow-50/50 p-6 rounded-xl border border-yellow-100 hover:shadow-md transition">
+                            <h3 class="text-lg font-bold text-yellow-700 mb-3 flex items-center"><i class="fa-solid fa-mountain-sun text-2xl mr-2"></i> ประเด็นท้าทาย (Challenge)</h3>
+                            <p class="text-sm text-gray-600 mb-3">ข้อตกลงในการพัฒนางานที่ครูเสนอต่อผู้บริหาร เพื่อแสดงให้เห็นถึงความมุ่งมั่นในการแก้ปัญหา หรือพัฒนาคุณภาพผู้เรียนตามระดับวิทยฐานะ:</p>
+                            <ul class="text-sm text-gray-700 space-y-2 list-none">
+                                <li><i class="fa-solid fa-arrow-trend-up text-accent mr-1"></i> <strong>ปรับประยุกต์</strong> (ชำนาญการ)</li>
+                                <li><i class="fa-solid fa-arrow-trend-up text-accent mr-1"></i> <strong>แก้ไขปัญหา</strong> (ชำนาญการพิเศษ)</li>
+                                <li><i class="fa-solid fa-arrow-trend-up text-accent mr-1"></i> <strong>ริเริ่ม พัฒนา</strong> (เชี่ยวชาญ)</li>
+                            </ul>
+                            <div class="mt-4 p-3 bg-white rounded border border-yellow-200 text-xs text-yellow-800">
+                                * การนิเทศจะช่วยสะท้อนผลลัพธ์ว่า นวัตกรรมหรือเทคโนโลยี (AI) ที่ครูนำมาใช้นั้น ตอบโจทย์ <strong>ประเด็นท้าทาย</strong> ที่ตั้งไว้หรือไม่
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- เจาะลึก 8 ตัวชี้วัด แบบบูรณาการ -->
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800 mb-4 border-l-4 border-accent pl-3">การประเมิน 8 ตัวชี้วัด ด้านการจัดการเรียนรู้ (บูรณาการสื่อ เทคโนโลยี และ AI)</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-blue-400 transition">
+                                <div class="text-blue-600 font-bold text-md mb-1">1. ผู้เรียนเข้าถึงและเข้าใจ</div>
+                                <p class="text-xs text-gray-600">เชื่อมโยงความรู้เดิมสู่ความรู้ใหม่ โดยใช้สื่อ เทคโนโลยี หรือ AI ช่วยสร้างบริบทที่เข้าใจง่าย</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-blue-400 transition">
+                                <div class="text-blue-600 font-bold text-md mb-1">2. ผู้เรียนเชื่อมโยง/แก้ปัญหา</div>
+                                <p class="text-xs text-gray-600">เปิดโอกาสให้ผู้เรียนเผชิญสถานการณ์ปัญหา ฝึกตั้งคำถาม และค้นหาคำตอบด้วยตนเอง</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-blue-400 transition">
+                                <div class="text-blue-600 font-bold text-md mb-1">3. ผู้เรียนสร้างความรู้เอง</div>
+                                <p class="text-xs text-gray-600">ออกแบบกิจกรรมแบบ Active Learning ให้ผู้เรียนลงมือปฏิบัติ (Do & Reflect) ผ่านนวัตกรรม</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-blue-400 transition">
+                                <div class="text-blue-600 font-bold text-md mb-1">4. ผู้เรียนมีส่วนร่วม/สะท้อนคิด</div>
+                                <p class="text-xs text-gray-600">กระตุ้นให้ผู้เรียนสื่อสาร นำเสนอผลงาน อภิปราย และวิพากษ์ผลลัพธ์อย่างมีเหตุผล</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-teal-400 transition">
+                                <div class="text-teal-600 font-bold text-md mb-1">5. บรรยากาศส่งเสริมการเรียนรู้</div>
+                                <p class="text-xs text-gray-600">สร้างสภาพแวดล้อมที่ปลอดภัย กล้าคิด กล้าทดลองใช้เทคโนโลยี และมีส่วนร่วมทุกคน</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-teal-400 transition">
+                                <div class="text-teal-600 font-bold text-md mb-1">6. ตอบสนองความแตกต่าง</div>
+                                <p class="text-xs text-gray-600">ใช้ความหลากหลายของสื่อ หรือ AI ในการช่วยเหลือเด็กกลุ่มช้า และท้าทายเด็กกลุ่มเก่ง</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-teal-400 transition">
+                                <div class="text-teal-600 font-bold text-md mb-1">7. การพัฒนาและให้ Feedback</div>
+                                <p class="text-xs text-gray-600">ประเมินผลตามสภาพจริงระหว่างเรียน และให้ข้อมูลย้อนกลับเชิงบวกเพื่อพัฒนาชิ้นงาน</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-teal-400 transition">
+                                <div class="text-teal-600 font-bold text-md mb-1">8. กำกับการเรียนรู้ (ผลลัพธ์)</div>
+                                <p class="text-xs text-gray-600">ผลงานผู้เรียนสะท้อนทักษะในศตวรรษที่ 21 ตรงตามประเด็นท้าทายที่ครูกำหนดไว้ใน ว PA</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Dashboard -->
+        <div id="view-dashboard" class="max-w-7xl mx-auto fade-in hidden">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-l-4 border-primary pl-3">แดชบอร์ดสถิติภาพรวมการนิเทศ</h2>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 font-medium">จำนวนครั้งการนิเทศรวม</p>
+                        <h4 id="stat-total-sups" class="text-3xl font-bold text-primary mt-1">0</h4>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full text-blue-600"><i class="fa-solid fa-file-signature text-xl"></i></div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 font-medium">ครูที่รับการนิเทศแล้ว</p>
+                        <h4 id="stat-supervised-teachers" class="text-3xl font-bold text-teal-600 mt-1">0</h4>
+                    </div>
+                    <div class="bg-teal-100 p-3 rounded-full text-teal-600"><i class="fa-solid fa-user-check text-xl"></i></div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 font-medium">ครูที่รอการนิเทศ</p>
+                        <h4 id="stat-pending-teachers" class="text-3xl font-bold text-orange-500 mt-1">0</h4>
+                    </div>
+                    <div class="bg-orange-100 p-3 rounded-full text-orange-600"><i class="fa-solid fa-user-clock text-xl"></i></div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 font-medium">คะแนนเฉลี่ย (เต็ม 4.00)</p>
+                        <h4 id="stat-avg-score" class="text-3xl font-bold text-accent mt-1">0.00</h4>
+                    </div>
+                    <div class="bg-yellow-100 p-3 rounded-full text-yellow-600"><i class="fa-solid fa-star text-xl"></i></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-bold text-gray-700 mb-4 text-center">ร้อยละความสำเร็จตาม 8 ตัวชี้วัด (ว PA)</h3>
+                    <div class="relative h-72 w-full">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-bold text-gray-700 mb-4 text-center">สัดส่วนการบูรณาการใช้สื่อเทคโนโลยี/AI</h3>
+                    <div class="relative h-72 w-full flex justify-center">
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Form -->
+        <div id="view-form" class="max-w-5xl mx-auto fade-in hidden">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-l-4 border-secondary pl-3">แบบบันทึกการนิเทศชั้นเรียนและสะท้อนคิด</h2>
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                <form id="supervisionForm" onsubmit="submitSupervision(event)">
+                    <div class="p-6 md:p-8">
+                        
+                        <!-- ส่วนที่ 1: ข้อมูลทั่วไป -->
                         <div class="mb-8">
-                            <h3 class="text-lg font-bold text-secondary border-b-2 border-teal-100 pb-2 mb-4"><i class="fa-solid fa-circle-info mr-2"></i>ข้อมูลพื้นฐาน</h3>
+                            <h3 class="text-lg font-bold text-primary border-b-2 border-blue-100 pb-2 mb-4"><i class="fa-regular fa-address-card mr-2"></i>ข้อมูลพื้นฐาน</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-1">ครูผู้รับการนิเทศ</label>
-                                    <select id="form-teacher-id" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary" required>
-                                        <option value="">-- เลือกครูผู้สอน --</option>
-                                        <!-- เติมด้วย JS -->
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-1">วันที่นิเทศ</label>
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">วันที่รับการนิเทศ</label>
                                     <input type="date" id="form-date" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary" required>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-1">รายวิชา/หน่วยการเรียนรู้</label>
-                                    <input type="text" id="form-subject" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary" placeholder="เช่น ภาษาไทย ป.6 เรื่อง..." required>
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">ขั้นตอนการนิเทศ (Empowerment Phase)</label>
+                                    <select id="form-empower-phase" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary text-blue-800 font-semibold" required>
+                                        <option value="1. สร้างความสัมพันธ์ (Building)">ระยะที่ 1: สร้างความสัมพันธ์และเป้าหมาย</option>
+                                        <option value="2. วินิจฉัยปัญหา (Diagnosing)">ระยะที่ 2: วินิจฉัยและระบุปัญหาร่วมกัน</option>
+                                        <option value="3. วางแผนร่วมกัน (Planning)">ระยะที่ 3: วางแผนการจัดการเรียนรู้ร่วมกัน</option>
+                                        <option value="4. สังเกตชั้นเรียน (Implementation)" selected>ระยะที่ 4: สังเกตชั้นเรียน (ประเมิน ว PA)</option>
+                                        <option value="5. สะท้อนผล (Reflection)">ระยะที่ 5: สะท้อนผลและปรับปรุงต่อเนื่อง</option>
+                                    </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-1">สื่อ AI ที่ใช้ประกอบ</label>
-                                    <input type="text" id="form-ai-tools" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary" placeholder="เช่น ChatGPT, Gemini, Canva AI">
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">ครูผู้รับการนิเทศ</label>
+                                    <select id="form-teacher-id" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary" required>
+                                        <option value="">-- เลือกครูผู้สอน --</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="block text-sm font-bold text-gray-700 mb-1">ระดับชั้นเรียน</label>
+                                        <select id="form-class-level" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary" required>
+                                            <option value="">-- ระดับชั้น --</option>
+                                            <optgroup label="ปฐมวัย">
+                                                <option value="อ.1">อนุบาล 1</option>
+                                                <option value="อ.2">อนุบาล 2</option>
+                                                <option value="อ.3">อนุบาล 3</option>
+                                            </optgroup>
+                                            <optgroup label="ประถมศึกษา">
+                                                <option value="ป.1">ป.1</option>
+                                                <option value="ป.2">ป.2</option>
+                                                <option value="ป.3">ป.3</option>
+                                                <option value="ป.4">ป.4</option>
+                                                <option value="ป.5">ป.5</option>
+                                                <option value="ป.6">ป.6</option>
+                                            </optgroup>
+                                            <optgroup label="มัธยมศึกษา">
+                                                <option value="ม.1">ม.1</option>
+                                                <option value="ม.2">ม.2</option>
+                                                <option value="ม.3">ม.3</option>
+                                                <option value="ม.4">ม.4</option>
+                                                <option value="ม.5">ม.5</option>
+                                                <option value="ม.6">ม.6</option>
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-bold text-gray-700 mb-1">ห้องเรียน</label>
+                                        <input type="text" id="form-room" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary" placeholder="เช่น 1, 1/1" required>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">กลุ่มสาระการเรียนรู้</label>
+                                    <select id="form-subject" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary" required onchange="toggleSubjectOther()">
+                                        <option value="">-- เลือกกลุ่มสาระฯ --</option>
+                                        <option value="ภาษาไทย">ภาษาไทย</option>
+                                        <option value="คณิตศาสตร์">คณิตศาสตร์</option>
+                                        <option value="วิทยาศาสตร์และเทคโนโลยี">วิทยาศาสตร์และเทคโนโลยี</option>
+                                        <option value="สังคมศึกษา ศาสนาฯ">สังคมศึกษา ศาสนาและวัฒนธรรม</option>
+                                        <option value="สุขศึกษาและพลศึกษา">สุขศึกษาและพลศึกษา</option>
+                                        <option value="ศิลปะ">ศิลปะ</option>
+                                        <option value="การงานอาชีพ">การงานอาชีพ</option>
+                                        <option value="ภาษาต่างประเทศ">ภาษาต่างประเทศ</option>
+                                        <option value="กิจกรรมพัฒนาผู้เรียน">กิจกรรมพัฒนาผู้เรียน</option>
+                                        <option value="ปฐมวัย">การศึกษาปฐมวัย</option>
+                                        <option value="บูรณาการ">วิชาบูรณาการ (โปรดระบุ)</option>
+                                    </select>
+                                    <input type="text" id="form-subject-other" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary mt-2 hidden" placeholder="ระบุวิชา เช่น บูรณาการ ไทย+คณิต+สังคม">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">เรื่อง/หน่วยการเรียนรู้</label>
+                                    <input type="text" id="form-topic" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary" placeholder="ระบุหัวข้อที่สอน" required>
+                                </div>
+
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">ประเด็นท้าทาย (Challenge Issue) ที่เกี่ยวข้องกับการสอนครั้งนี้ (ถ้ามี)</label>
+                                    <input type="text" id="form-pa-challenge" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary" placeholder="ระบุข้อตกลงประเด็นท้าทาย (ว PA) ของครู เช่น การแก้ปัญหาการคิดวิเคราะห์ด้วยนวัตกรรม...">
+                                </div>
+
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">สื่อเทคโนโลยี/นวัตกรรม/AI ที่ใช้</label>
+                                    <input type="text" id="form-ai-tools" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary" placeholder="เช่น สื่อมัลติมีเดีย, E-Learning, AI(ChatGPT, Canva), ชุดกิจกรรม ฯลฯ">
                                 </div>
                             </div>
                         </div>
 
                         <!-- ส่วนที่ 2: การประเมิน ว PA -->
                         <div class="mb-8">
-                            <h3 class="text-lg font-bold text-secondary border-b-2 border-teal-100 pb-2 mb-4"><i class="fa-solid fa-list-check mr-2"></i>ตารางประเมินร่องรอยเชิงประจักษ์ (8 ตัวชี้วัด)</h3>
+                            <div class="flex flex-col md:flex-row md:justify-between md:items-end border-b-2 border-teal-100 pb-2 mb-4 gap-2">
+                                <h3 class="text-lg font-bold text-secondary"><i class="fa-solid fa-list-check mr-2"></i>ตารางประเมินการปฏิบัติงาน (8 ตัวชี้วัด)</h3>
+                                <div class="text-xs text-gray-700 font-semibold bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200">
+                                    เกณฑ์: 4=ดีเยี่ยม, 3=ดี, 2=พอใช้, 1=ควรปรับปรุง, 0=ไม่ชัดเจน
+                                </div>
+                            </div>
                             
                             <div class="overflow-x-auto">
                                 <table class="min-w-full border-collapse border border-gray-200 rounded-lg">
                                     <thead class="bg-gray-50 text-gray-700">
                                         <tr>
-                                            <th class="border p-3 text-left w-2/3">ตัวชี้วัด / พฤติกรรมบ่งชี้ (บริบทการใช้ AI)</th>
-                                            <th class="border p-3 text-center">ปฏิบัติชัดเจน</th>
-                                            <th class="border p-3 text-center">ควรพัฒนา</th>
+                                            <th class="border p-3 text-left w-1/2">ตัวชี้วัดด้านการจัดการเรียนรู้ (ประยุกต์ใช้กับทุกรายวิชา)</th>
+                                            <th class="border p-3 text-center w-12" title="ดีเยี่ยม">4</th>
+                                            <th class="border p-3 text-center w-12" title="ดี">3</th>
+                                            <th class="border p-3 text-center w-12" title="พอใช้">2</th>
+                                            <th class="border p-3 text-center w-12" title="ควรปรับปรุง">1</th>
+                                            <th class="border p-3 text-center w-12" title="ไม่ชัดเจน">0</th>
                                         </tr>
                                     </thead>
                                     <tbody id="criteria-table-body" class="text-sm">
-                                        <!-- สร้างด้วย JS เพื่อลดความซ้ำซ้อนของโค้ด -->
+                                        <!-- สร้างด้วย JS -->
                                     </tbody>
                                 </table>
                             </div>
                         </div>
 
-                        <!-- ส่วนที่ 3: ข้อเสนอแนะ -->
-                        <div class="mb-8">
-                            <h3 class="text-lg font-bold text-secondary border-b-2 border-teal-100 pb-2 mb-4"><i class="fa-solid fa-comment-dots mr-2"></i>สรุปผลการสะท้อนคิด (Coaching Feedback)</h3>
-                            
-                            <div class="mb-4">
-                                <label class="block text-sm font-bold text-gray-700 mb-1">🌟 จุดเด่นที่พบ (Strengths & Best Practices)</label>
-                                <textarea id="form-strengths" rows="3" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary" placeholder="ระบุสิ่งที่ครูทำได้ดี..."></textarea>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-sm font-bold text-gray-700 mb-1">💡 ข้อเสนอแนะเพื่อพัฒนาสู่วิทยฐานะ (Recommendations & Next Steps)</label>
-                                <textarea id="form-recommendations" rows="3" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary" placeholder="ข้อเสนอแนะในการต่อยอด..."></textarea>
+                        <!-- ส่วนที่ 3: สรุปผล -->
+                        <div>
+                            <h3 class="text-lg font-bold text-accent border-b-2 border-yellow-100 pb-2 mb-4"><i class="fa-regular fa-comment-dots mr-2"></i>ข้อค้นพบและการสะท้อนคิด (Reflection)</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">จุดเด่นที่พบในการจัดการเรียนรู้ (Strengths & Best Practices)</label>
+                                    <textarea id="form-strengths" rows="3" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary" placeholder="ระบุสิ่งที่ทำได้ดี นวัตกรรมที่น่าสนใจ หรือรูปแบบการสอนเชิงรุก (Active Learning) ที่เห็น..."></textarea>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-end mb-1">
+                                        <label class="block text-sm font-bold text-gray-700">ข้อเสนอแนะเพื่อพัฒนาสู่ "ประเด็นท้าทาย" (Recommendations)</label>
+                                        <button type="button" onclick="generateAIRecommendations()" class="text-xs bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded shadow transition flex items-center">
+                                            <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> AI ช่วยร่างข้อเสนอแนะ
+                                        </button>
+                                    </div>
+                                    <textarea id="form-recommendations" rows="3" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary" placeholder="ระบุข้อควรพัฒนา การแก้ปัญหาผู้เรียน หรือแนวทางการต่อยอดสู่ประเด็นท้าทาย (Challenge)..."></textarea>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="flex justify-end gap-3 pt-4 border-t">
-                            <button type="button" onclick="navigate('dashboard')" class="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold">ยกเลิก</button>
-                            <button type="submit" class="px-6 py-2.5 rounded-lg bg-secondary text-white hover:bg-teal-800 shadow-md font-semibold"><i class="fa-solid fa-save mr-2"></i>บันทึกผลการนิเทศ</button>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+                    <div class="bg-gray-50 p-6 border-t border-gray-200 flex justify-end space-x-3">
+                        <button type="button" onclick="navigate('report')" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-bold transition">ยกเลิก</button>
+                        <button type="submit" class="px-5 py-2.5 bg-primary text-white rounded-lg hover:bg-blue-800 font-bold transition shadow"><i class="fa-solid fa-save mr-2"></i> บันทึกผลการนิเทศ</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- View: Report -->
+        <div id="view-report" class="max-w-7xl mx-auto fade-in hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 border-l-4 border-blue-500 pl-3">รายงานผลการนิเทศและประเมิน ว PA</h2>
+                <div id="report-action-area"></div>
             </div>
 
-            <!-- ================= PAGE: REPORTS (รายงาน) ================= -->
-            <div id="page-reports" class="page">
-                <div class="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-800" id="report-page-title">รายงานผลการนิเทศทั้งหมด</h2>
-                        <p class="text-gray-500">ประวัติการนิเทศและข้อเสนอแนะ</p>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full whitespace-nowrap">
-                            <thead class="bg-primary text-white text-sm">
-                                <tr>
-                                    <th class="py-3 px-4 text-left font-semibold">วันที่</th>
-                                    <th class="py-3 px-4 text-left font-semibold">ครูผู้รับการนิเทศ</th>
-                                    <th class="py-3 px-4 text-left font-semibold">ผู้นิเทศ</th>
-                                    <th class="py-3 px-4 text-left font-semibold">รายวิชา</th>
-                                    <th class="py-3 px-4 text-center font-semibold">ผลการประเมิน</th>
-                                    <th class="py-3 px-4 text-center font-semibold">จัดการ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="report-table-body" class="text-sm divide-y divide-gray-200">
-                                <!-- เติมด้วย JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ================= PAGE: ADMIN USERS (แอดมิน) ================= -->
-            <div id="page-admin-users" class="page">
-                <div class="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-800">จัดการผู้ใช้งานระบบ</h2>
-                        <p class="text-gray-500">เพิ่ม/ลบ/แก้ไข สิทธิ์การเข้าถึง</p>
-                    </div>
-                    <button onclick="openUserModal()" class="bg-primary hover:bg-blue-800 text-white px-4 py-2 rounded-lg font-semibold shadow transition">
-                        <i class="fa-solid fa-plus mr-1"></i> เพิ่มผู้ใช้ใหม่
-                    </button>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-                    <table class="min-w-full whitespace-nowrap">
-                        <thead class="bg-gray-100 text-gray-700 text-sm">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-left text-sm whitespace-nowrap">
+                        <thead class="uppercase tracking-wider border-b-2 border-gray-200 bg-gray-50 text-gray-600 font-bold">
                             <tr>
-                                <th class="py-3 px-4 text-left font-semibold">ชื่อ-สกุล</th>
-                                <th class="py-3 px-4 text-left font-semibold">Username</th>
-                                <th class="py-3 px-4 text-left font-semibold">บทบาท (Role)</th>
-                                <th class="py-3 px-4 text-center font-semibold">สถานะ</th>
-                                <th class="py-3 px-4 text-center font-semibold">การกระทำ</th>
+                                <th class="py-3 px-4">วันที่นิเทศ</th>
+                                <th class="py-3 px-4">ผู้รับการนิเทศ</th>
+                                <th class="py-3 px-4">ผู้นิเทศ</th>
+                                <th class="py-3 px-4">ระดับชั้น/วิชา</th>
+                                <th class="py-3 px-4 text-center">คะแนนรวม</th>
+                                <th class="py-3 px-4 text-center">จัดการ</th>
                             </tr>
                         </thead>
-                        <tbody id="admin-users-tbody" class="text-sm divide-y divide-gray-200">
-                            <!-- เติมด้วย JS -->
+                        <tbody id="report-table-body" class="divide-y divide-gray-100">
+                            <!-- JS Injected -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="report-empty" class="hidden text-center py-12">
+                    <i class="fa-regular fa-folder-open text-4xl text-gray-300 mb-3"></i>
+                    <p class="text-gray-500">ยังไม่มีข้อมูลการนิเทศในระบบ</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Admin (User Management) -->
+        <div id="view-admin" class="max-w-6xl mx-auto fade-in hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 border-l-4 border-red-500 pl-3">การจัดการระบบ (แอดมิน)</h2>
+                <button onclick="showUserModal()" class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-800 transition"><i class="fa-solid fa-user-plus mr-1"></i> เพิ่มผู้ใช้ใหม่</button>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-left text-sm whitespace-nowrap">
+                        <thead class="uppercase tracking-wider border-b-2 border-gray-200 bg-gray-50 text-gray-600 font-bold">
+                            <tr>
+                                <th class="py-3 px-4">ID / Username</th>
+                                <th class="py-3 px-4">ชื่อ-นามสกุล</th>
+                                <th class="py-3 px-4">สิทธิ์การใช้งาน (Role)</th>
+                                <th class="py-3 px-4 text-center">สถานะ</th>
+                                <th class="py-3 px-4 text-center">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-user-body" class="divide-y divide-gray-100">
+                            <!-- JS Injected -->
                         </tbody>
                     </table>
                 </div>
             </div>
+        </div>
 
-        </main>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 py-4 mt-auto flex-shrink-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 text-center text-sm text-gray-500">
+            <p>พัฒนาระบบโดย <span class="font-bold text-primary">ธนะวัฒน์ เลิศประเสริฐ</span> ศน.ศธจ.นราธิวาส</p>
+        </div>
+    </footer>
+
+    <!-- Modal Login -->
+    <div id="modal-login" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center hidden">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 transform transition-all p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-primary">เข้าสู่ระบบ</h3>
+                <button onclick="hideLogin()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form onsubmit="handleLogin(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Username</label>
+                    <input type="text" id="login-username" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary" placeholder="รหัสผู้ใช้งาน" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Password</label>
+                    <input type="password" id="login-password" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary" placeholder="รหัสผ่าน" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-gray-700 mb-1">การป้องกันสแปม (แก้โจทย์คณิตศาสตร์)</label>
+                    <div class="flex items-center space-x-3">
+                        <div id="captcha-display" class="captcha-box border border-gray-300 px-4 py-2 rounded text-lg font-mono font-bold tracking-widest text-gray-800 select-none flex-shrink-0 w-28 text-center shadow-inner">
+                            ? + ?
+                        </div>
+                        <input type="number" id="login-captcha" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary" placeholder="คำตอบ" required autocomplete="off">
+                        <button type="button" onclick="generateCaptcha()" class="text-gray-500 hover:text-blue-600 p-2" title="สุ่มคำถามใหม่"><i class="fa-solid fa-rotate"></i></button>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-primary text-white rounded-lg py-3 font-bold hover:bg-blue-800 transition">ล็อกอิน</button>
+                <div class="mt-4 bg-gray-100 p-3 rounded text-xs text-gray-600">
+                    <strong>บัญชีทดสอบ:</strong><br>
+                    - แอดมิน: admin / 1234<br>
+                    - ผู้นิเทศ: sn01 / 1234<br>
+                    - ครูผู้สอน: teacher01 / 1234
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal เพิ่ม/แก้ไข ผู้ใช้ (Admin) -->
+    <div id="modal-user" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center hidden">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 transform transition-all p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-user-title" class="text-xl font-bold text-primary">เพิ่มผู้ใช้ใหม่</h3>
+                <button onclick="hideUserModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form onsubmit="saveUser(event)">
+                <input type="hidden" id="admin-user-id">
+                <div class="mb-3">
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Username</label>
+                    <input type="text" id="admin-username" class="w-full border rounded p-2 focus:ring-2 focus:ring-primary" required>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Password</label>
+                    <input type="text" id="admin-password" class="w-full border rounded p-2 focus:ring-2 focus:ring-primary" required>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-bold text-gray-700 mb-1">ชื่อ-นามสกุล</label>
+                    <input type="text" id="admin-name" class="w-full border rounded p-2 focus:ring-2 focus:ring-primary" required>
+                </div>
+                <div class="mb-5">
+                    <label class="block text-xs font-bold text-gray-700 mb-1">สิทธิ์ (Role)</label>
+                    <select id="admin-role" class="w-full border rounded p-2 focus:ring-2 focus:ring-primary" required>
+                        <option value="teacher">ครูผู้สอน (Teacher)</option>
+                        <option value="supervisor">ผู้นิเทศ (Supervisor)</option>
+                        <option value="admin">แอดมิน (Admin)</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="hideUserModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-300">ยกเลิก</button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-blue-800">บันทึก</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
-        /* ====================================================================
-           MOCK BACKEND & DATABASE (สำหรับใช้งานในโหมด Preview หน้าเว็บเดี่ยว)
-           หากนำไปใช้ใน GAS ให้ใช้ google.script.run แทนส่วนนี้
-        ==================================================================== */
-        
-        // ฐานข้อมูลผู้ใช้จำลอง
+        // --- MOCK BACKEND (จำลองฐานข้อมูล) ---
         let dbUsers = [
             { id: 1, username: 'admin', password: '1234', name: 'ระบบผู้ดูแล', role: 'admin', status: 'active' },
             { id: 2, username: 'sn01', password: '1234', name: 'ศน. ใจดี มีเมตตา', role: 'supervisor', status: 'active' },
-            { id: 3, username: 'boss', password: '1234', name: 'ผอ. รักเรียน', role: 'supervisor', status: 'active' },
-            { id: 4, username: 'teacher01', password: '1234', name: 'ครู สมชาย ขยันสอน', role: 'teacher', status: 'active' },
-            { id: 5, username: 'teacher02', password: '1234', name: 'ครู สมหญิง รักเด็ก', role: 'teacher', status: 'active' },
+            { id: 3, username: 'teacher01', password: '1234', name: 'ครู สมชาย (วิทยฐานะชำนาญการ)', role: 'teacher', status: 'active' },
+            { id: 4, username: 'teacher02', password: '1234', name: 'ครู สมหญิง (วิทยฐานะชำนาญการพิเศษ)', role: 'teacher', status: 'active' }
         ];
 
-        // เกณฑ์การประเมิน 8 ตัวชี้วัด (ว PA)
-        const criteriaList = [
-            "1. เข้าถึงสิ่งที่เรียนและเข้าใจบทเรียน (เชื่อมโยงความรู้เดิม + AI สร้างบริบท)",
-            "2. การแก้ปัญหาและริเริ่มสร้างสรรค์ (นักเรียนฝึกตั้ง Prompt / ตรวจสอบ)",
-            "3. สร้างความรู้ด้วยตนเอง (Active Learning ผ่าน AI)",
-            "4. การสื่อสารและสะท้อนคิด (เปรียบเทียบผลมนุษย์ vs AI)",
-            "5. บรรยากาศการเรียนรู้ (กล้าคิด กล้าทดลอง ปลอดภัย)",
-            "6. ตอบสนองความแตกต่าง (ใช้ AI เสริมเด็กช้า/ท้าทายเด็กเก่ง)",
-            "7. การวัดผลและ Feedback (ประเมินกระบวนการ/Feedback ทันที)",
-            "8. ผลลัพธ์ (สะท้อนทักษะภาษาไทย + AI Literacy)"
-        ];
-
-        // ฐานข้อมูลผลการนิเทศจำลอง
         let dbSupervisions = [
             {
-                id: 'SUP-001', date: '2026-08-15', teacherId: 4, supervisorId: 2,
-                subject: 'ภาษาไทย ป.6 การแต่งกลอนแปด', aiTools: 'ChatGPT',
-                scores: [1, 1, 1, 1, 1, 1, 1, 1], // 1=ชัดเจน, 0=ควรพัฒนา
-                strengths: 'ครูสามารถกระตุ้นให้นักเรียนใช้ ChatGPT ในการค้นหาคำคล้องจองได้อย่างสนุกสนาน',
-                recommendations: 'ควรเพิ่มการวิเคราะห์เปรียบเทียบความสละสลวยของกลอนที่ AI แต่งกับที่คนแต่ง'
-            },
-            {
-                id: 'SUP-002', date: '2026-08-18', teacherId: 5, supervisorId: 3,
-                subject: 'ภาษาไทย ป.6 การเขียนเรียงความ', aiTools: 'Gemini',
-                scores: [1, 1, 0, 1, 1, 1, 0, 1], 
-                strengths: 'บรรยากาศในชั้นเรียนดีมาก นักเรียนมีส่วนร่วมทุกคน',
-                recommendations: 'ควรปรับปรุงการให้ Feedback รายบุคคลระหว่างที่เด็กกำลังสร้างชิ้นงาน'
+                id: 'SUP-001', date: '2026-08-15', phase: '4. สังเกตชั้นเรียน (Implementation)', 
+                teacherId: 3, supervisorId: 2, classLevel: 'ม.1', room: '2', 
+                subject: 'วิทยาศาสตร์และเทคโนโลยี', topic: 'ระบบนิเวศจำลอง', 
+                paChallenge: 'การแก้ปัญหาความเข้าใจระบบนิเวศด้วยการสร้างแบบจำลองเสมือนจริง (3D)',
+                aiTools: 'แบบจำลอง 3D, แท็บเล็ต',
+                scores: [4, 3, 4, 3, 4, 3, 4, 4], 
+                strengths: 'ครูจัดสภาพแวดล้อมได้ดี เปิดโอกาสให้นักเรียนได้ใช้แท็บเล็ตสืบค้นและสร้างแบบจำลองร่วมกัน เกิดกระบวนการ Active Learning อย่างชัดเจน',
+                recommendations: 'สามารถนำรูปแบบการจัดกิจกรรมนี้ไปเป็นแนวปฏิบัติที่ดี (Best Practice) ในประเด็นท้าทาย เพื่อขยายผลสู่เพื่อนครูในระดับชั้นอื่นได้'
             }
         ];
 
-        // ตัวแปรเก็บสถานะปัจจุบัน
-        let currentUser = null; 
-        let currentCharts = {};
+        // ตัวแปรสถานะ
+        let currentUser = null;
+        let currentView = 'home';
+        let charts = {};
+        let currentCaptchaAnswer = 0;
 
-        /* ====================================================================
-           FRONTEND LOGIC (การจัดการ UI และ State)
-        ==================================================================== */
+        // ตัวชี้วัด 8 ข้อ (ฉบับบูรณาการ เป็นกลาง ใช้ได้กับทุกรายวิชา)
+        const criteriaList = [
+            { title: "1. ผู้เรียนสามารถเข้าถึงและเข้าใจบทเรียน", desc: "ครูใช้สื่อ/เทคโนโลยีเชื่อมโยงความรู้เดิม สู่การเรียนรู้ใหม่ได้อย่างน่าสนใจ" },
+            { title: "2. ผู้เรียนสามารถเชื่อมโยงและแก้ปัญหา", desc: "จัดกิจกรรมให้ผู้เรียนเผชิญปัญหา ฝึกตั้งคำถาม และหาคำตอบด้วยกระบวนการที่เหมาะสม" },
+            { title: "3. ผู้เรียนสร้างความรู้ได้ด้วยตนเอง", desc: "ผู้เรียนได้ลงมือปฏิบัติ (Active Learning) สร้างสรรค์ชิ้นงาน/นวัตกรรมด้วยตนเอง" },
+            { title: "4. ผู้เรียนมีส่วนร่วมในการสื่อสารและสะท้อนคิด", desc: "มีการนำเสนอ แลกเปลี่ยนเรียนรู้ อภิปราย และวิพากษ์ผลงานอย่างมีเหตุผล" },
+            { title: "5. บรรยากาศการเรียนรู้ส่งเสริมการมีส่วนร่วม", desc: "สร้างสภาพแวดล้อมที่ปลอดภัย กระตุ้นการคิด และเปิดโอกาสให้ทุกคนมีส่วนร่วม" },
+            { title: "6. การจัดการเรียนรู้ตอบสนองความแตกต่าง", desc: "มีการยืดหยุ่น หรือใช้เทคโนโลยีช่วยเหลือเด็กกลุ่มช้า และท้าทายเด็กกลุ่มศักยภาพสูง" },
+            { title: "7. การวัดประเมินผลและการให้ข้อมูลย้อนกลับ", desc: "ประเมินผลตามสภาพจริงระหว่างเรียน พร้อมให้ Feedback เพื่อพัฒนาอย่างต่อเนื่อง" },
+            { title: "8. การกำกับการเรียนรู้และผลลัพธ์ของผู้เรียน", desc: "ผลงานสะท้อนทักษะศตวรรษที่ 21 สอดคล้องกับ 'ประเด็นท้าทาย' ที่ระบุไว้ใน ว PA" }
+        ];
 
-        // เมื่อหน้าเว็บโหลดเสร็จ
-        document.addEventListener('DOMContentLoaded', () => {
-            initApp();
-        });
-
-        function initApp() {
-            // ตรวจสอบ Session จาก localStorage (จำลอง)
-            const savedUser = localStorage.getItem('eduUser');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                applyUserRole();
-                navigate('dashboard');
-            } else {
-                navigate('dashboard'); // ผู้เยี่ยมชมเห็นแดชบอร์ด
-            }
-            
+        window.onload = () => {
             generateFormCriteria();
-            renderDashboard();
+            checkSession();
+        };
+
+        function navigate(viewId) {
+            ['home', 'dashboard', 'form', 'report', 'admin'].forEach(id => {
+                document.getElementById(`view-${id}`).classList.add('hidden');
+            });
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+            currentView = viewId;
+
+            if (viewId === 'dashboard') renderDashboard();
+            if (viewId === 'report') renderReport();
+            if (viewId === 'form') prepareForm();
+            if (viewId === 'admin') renderAdmin();
         }
 
-        // ระบบนำทาง (SPA Navigation)
-        function navigate(pageId) {
-            // ซ่อนทุกหน้า
-            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-            
-            // ปิด Mobile Menu ถ้าเปิดอยู่
-            document.getElementById('sidebar').classList.add('hidden');
-            
-            // ถ้าระบบต้องการสิทธิ์ แต่ยังไม่ล็อกอิน
-            const authRequiredPages = ['schedule-teacher', 'my-reports', 'schedule-supervisor', 'supervision-form', 'admin-users', 'admin-settings'];
-            if (authRequiredPages.includes(pageId) && !currentUser) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'กรุณาเข้าสู่ระบบ',
-                    text: 'หน้านี้สงวนไว้สำหรับผู้ใช้งานในระบบเท่านั้น',
-                    confirmButtonColor: '#1e3a8a'
-                });
-                document.getElementById('page-login').classList.add('active');
+        function showLogin() { 
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+            generateCaptcha();
+            document.getElementById('modal-login').classList.remove('hidden'); 
+        }
+        function hideLogin() { document.getElementById('modal-login').classList.add('hidden'); }
+
+        function generateCaptcha() {
+            const num1 = Math.floor(Math.random() * 9) + 1;
+            const num2 = Math.floor(Math.random() * 9) + 1;
+            currentCaptchaAnswer = num1 + num2;
+            document.getElementById('captcha-display').textContent = `${num1} + ${num2}`;
+            document.getElementById('login-captcha').value = '';
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const captchaInput = parseInt(document.getElementById('login-captcha').value);
+            if (captchaInput !== currentCaptchaAnswer) {
+                Swal.fire('ข้อผิดพลาด', 'คำตอบป้องกันสแปมไม่ถูกต้อง กรุณาลองใหม่', 'warning');
+                generateCaptcha();
                 return;
             }
 
-            // แสดงหน้าเป้าหมาย
-            const targetPage = document.getElementById('page-' + pageId);
-            if (targetPage) {
-                targetPage.classList.add('active');
-            }
-
-            // รันสคริปต์เฉพาะหน้า
-            if(pageId === 'dashboard') renderDashboard();
-            if(pageId === 'supervision-form') prepareForm();
-            if(pageId === 'reports' || pageId === 'my-reports') renderReportsView(pageId);
-            if(pageId === 'admin-users') renderAdminUsers();
-        }
-
-        function toggleMobileMenu() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('hidden');
-            sidebar.classList.toggle('absolute');
-            sidebar.classList.toggle('z-50');
-            sidebar.classList.toggle('h-full');
-        }
-
-        // ระบบ Authentication
-        function handleLogin(e) {
-            e.preventDefault();
-            const userInp = document.getElementById('username').value;
-            const passInp = document.getElementById('password').value;
-
-            // ค้นหาใน Mock DB
-            const user = dbUsers.find(u => u.username === userInp && u.password === passInp && u.status === 'active');
+            const u = document.getElementById('login-username').value;
+            const p = document.getElementById('login-password').value;
+            const user = dbUsers.find(x => x.username === u && x.password === p);
             
             if (user) {
+                if(user.status === 'suspended') {
+                    Swal.fire('ถูกระงับสิทธิ์', 'บัญชีของคุณถูกระงับการใช้งาน', 'error');
+                    return;
+                }
                 currentUser = user;
-                localStorage.setItem('eduUser', JSON.stringify(user));
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'เข้าสู่ระบบสำเร็จ',
-                    text: `ยินดีต้อนรับ ${user.name}`,
-                    timer: 1500,
-                    showConfirmButton: false
-                }).then(() => {
-                    applyUserRole();
-                    navigate('dashboard');
-                });
+                hideLogin();
+                updateUIForUser();
+                Swal.fire({ title: 'สำเร็จ', text: `ยินดีต้อนรับ ${user.name}`, icon: 'success', timer: 1500, showConfirmButton: false });
+                navigate('dashboard');
             } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'เข้าสู่ระบบไม่สำเร็จ',
-                    text: 'ชื่อผู้ใช้งาน รหัสผ่านไม่ถูกต้อง หรือบัญชีถูกระงับ',
-                    confirmButtonColor: '#1e3a8a'
-                });
+                Swal.fire('ข้อผิดพลาด', 'Username หรือ Password ไม่ถูกต้อง', 'error');
             }
         }
 
         function logout() {
-            Swal.fire({
-                title: 'ยืนยันการออกจากระบบ?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'ออกจากระบบ',
-                cancelButtonText: 'ยกเลิก'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    currentUser = null;
-                    localStorage.removeItem('eduUser');
-                    applyUserRole();
-                    navigate('dashboard');
-                }
-            });
+            currentUser = null;
+            updateUIForUser();
+            navigate('home');
         }
 
-        // ปรับแต่ง UI ตามบทบาท (Role)
-        function applyUserRole() {
-            // ซ่อนทุกเมนูส่วนตัวก่อน
-            document.getElementById('menu-teacher').classList.add('hidden');
-            document.getElementById('menu-supervisor').classList.add('hidden');
-            document.getElementById('menu-admin').classList.add('hidden');
-            document.getElementById('userInfo').classList.add('hidden');
-            document.getElementById('btnLogin').classList.remove('hidden');
-            document.getElementById('btnLogout').classList.add('hidden');
+        function checkSession() { updateUIForUser(); }
 
-            if (!currentUser) return; // ถ้าเป็น Guest จบแค่นี้
+        function updateUIForUser() {
+            const navLinks = document.getElementById('nav-links');
+            const btnLogin = document.getElementById('btn-login-modal');
+            const btnLogout = document.getElementById('btn-logout');
+            const userInfo = document.getElementById('user-info');
+            const btnForm = document.getElementById('btn-nav-form');
+            const btnAdmin = document.getElementById('btn-nav-admin');
 
-            // แสดงข้อมูลผู้ใช้
-            document.getElementById('userInfo').classList.remove('hidden');
-            document.getElementById('userNameDisplay').innerText = currentUser.name;
-            document.getElementById('btnLogin').classList.add('hidden');
-            document.getElementById('btnLogout').classList.remove('hidden');
+            // แสดงเมนูพื้นฐานเสมอเพื่อให้บุคคลทั่วไปกดสลับไปมาได้
+            navLinks.classList.remove('hidden');
+            navLinks.classList.add('flex');
 
-            const badge = document.getElementById('userRoleBadge');
-            
-            // เปิดเมนูตาม Role
-            if (currentUser.role === 'admin') {
-                document.getElementById('menu-admin').classList.remove('hidden');
-                document.getElementById('menu-supervisor').classList.remove('hidden'); // Admin นิเทศได้
-                badge.innerText = "ผู้ดูแลระบบ";
-                badge.className = "inline-block mt-1 px-2 py-1 text-[10px] font-bold rounded-full bg-red-500 text-white";
-            } 
-            else if (currentUser.role === 'supervisor') {
-                document.getElementById('menu-supervisor').classList.remove('hidden');
-                badge.innerText = "ผู้นิเทศ";
-                badge.className = "inline-block mt-1 px-2 py-1 text-[10px] font-bold rounded-full bg-secondary text-white";
-            }
-            else if (currentUser.role === 'teacher') {
-                document.getElementById('menu-teacher').classList.remove('hidden');
-                badge.innerText = "ครูผู้สอน";
-                badge.className = "inline-block mt-1 px-2 py-1 text-[10px] font-bold rounded-full bg-orange-500 text-white";
+            if (currentUser) {
+                btnLogin.classList.add('hidden');
+                btnLogout.classList.remove('hidden');
+                userInfo.classList.remove('hidden');
+                document.getElementById('display-name').textContent = currentUser.name;
+                
+                let roleTh = currentUser.role === 'admin' ? 'แอดมิน' : (currentUser.role === 'supervisor' ? 'ผู้นิเทศ' : 'ครูผู้สอน');
+                document.getElementById('display-role').textContent = roleTh;
+
+                btnForm.classList.toggle('hidden', currentUser.role !== 'supervisor');
+                btnAdmin.classList.toggle('hidden', currentUser.role !== 'admin');
+            } else {
+                btnLogin.classList.remove('hidden');
+                btnLogout.classList.add('hidden');
+                userInfo.classList.add('hidden');
+                
+                // ซ่อนเมนูที่ต้องใช้สิทธิ์
+                btnForm.classList.add('hidden');
+                btnAdmin.classList.add('hidden');
             }
         }
 
-        // แดชบอร์ดและสถิติ
         function renderDashboard() {
-            // คำนวณสถิติจาก Mock DB
-            const totalTeachers = dbUsers.filter(u => u.role === 'teacher').length;
+            const activeTeachers = dbUsers.filter(u => u.role === 'teacher' && u.status === 'active');
+            const totalTeachersCount = activeTeachers.length;
             const totalSups = dbSupervisions.length;
+            
+            const supervisedTeacherIds = new Set();
+            dbSupervisions.forEach(s => {
+                if(activeTeachers.find(t => t.id === s.teacherId)) supervisedTeacherIds.add(s.teacherId);
+            });
+            
+            const supervisedCount = supervisedTeacherIds.size;
+            const pendingCount = totalTeachersCount - supervisedCount;
             
             let sumScores = 0;
             let criteriaSum = Array(8).fill(0);
+            let aiUsage = { 'บูรณาการสื่อ/เทคโนโลยี': 0, 'จัดการเรียนรู้แบบเดิม': 0 };
 
             dbSupervisions.forEach(s => {
-                const docScore = s.scores.reduce((a,b)=>a+b, 0); // คะแนนเต็ม 8
-                sumScores += (docScore / 8) * 4; // แปลงเป็นเต็ม 4.0
+                const docScore = s.scores.reduce((a,b)=>a+b, 0);
+                sumScores += (docScore / 32) * 4; // แปลงคะแนนเต็ม 32 เป็น 4.00
                 s.scores.forEach((sc, idx) => criteriaSum[idx] += sc);
+                if (s.aiTools && s.aiTools.trim() !== '') aiUsage['บูรณาการสื่อ/เทคโนโลยี']++;
+                else aiUsage['จัดการเรียนรู้แบบเดิม']++;
             });
 
-            const avgScore = totalSups > 0 ? (sumScores / totalSups).toFixed(1) : "0.0";
+            const avgScore = totalSups > 0 ? (sumScores / totalSups).toFixed(2) : "0.00";
             
-            // อัปเดต UI
-            document.getElementById('stat-teachers').innerText = totalTeachers;
-            document.getElementById('stat-supervisions').innerText = totalSups;
-            document.getElementById('stat-avg-score').innerText = avgScore + "/4.0";
-            
-            // สร้าง Charts
-            buildCharts(criteriaSum, totalSups);
+            document.getElementById('stat-total-sups').textContent = totalSups;
+            document.getElementById('stat-supervised-teachers').textContent = supervisedCount + " คน";
+            document.getElementById('stat-pending-teachers').textContent = pendingCount + " คน";
+            document.getElementById('stat-avg-score').textContent = avgScore;
+
+            buildCharts(criteriaSum, totalSups, aiUsage);
         }
 
-        function buildCharts(criteriaSum, totalSups) {
-            // คำนวณเป็น % สำหรับ Radar
-            const radarData = criteriaSum.map(val => totalSups > 0 ? (val/totalSups)*100 : 0);
+        function buildCharts(criteriaSum, totalSups, aiUsage) {
+            const radarData = criteriaSum.map(val => totalSups > 0 ? (val/(totalSups * 4))*100 : 0);
+            if (charts.radar) charts.radar.destroy();
+            if (charts.pie) charts.pie.destroy();
 
-            // เคลียร์กราฟเก่าถ้ามี
-            if(currentCharts.radar) currentCharts.radar.destroy();
-            if(currentCharts.bar) currentCharts.bar.destroy();
-
-            // Radar Chart (ประเมิน 8 ด้าน)
             const ctxRadar = document.getElementById('radarChart').getContext('2d');
-            currentCharts.radar = new Chart(ctxRadar, {
+            charts.radar = new Chart(ctxRadar, {
                 type: 'radar',
                 data: {
-                    labels: ['เข้าใจบทเรียน', 'ริเริ่มสิ่งใหม่', 'สร้างความรู้', 'สะท้อนคิด', 'บรรยากาศ', 'ตอบสนองบุคคล', 'วัดผล Feedback', 'ผลลัพธ์ AI'],
+                    labels: criteriaList.map(c => `ตัวชี้วัดที่ ${c.title.split('.')[0]}`),
                     datasets: [{
-                        label: '% ปฏิบัติชัดเจน',
+                        label: 'ร้อยละความสำเร็จตามมาตรฐาน ว PA',
                         data: radarData,
                         backgroundColor: 'rgba(15, 118, 110, 0.2)',
                         borderColor: 'rgba(15, 118, 110, 1)',
@@ -627,147 +771,158 @@
                         borderWidth: 2
                     }]
                 },
-                options: {
-                    scales: { r: { min: 0, max: 100 } },
-                    plugins: { legend: { display: false } }
-                }
+                options: { responsive: true, maintainAspectRatio: false, scales: { r: { min: 0, max: 100, ticks: { stepSize: 20 } } }, plugins: { legend: { position: 'bottom' } } }
             });
 
-            // Bar Chart (จำลองข้อมูลรายเดือน)
-            const ctxBar = document.getElementById('barChart').getContext('2d');
-            currentCharts.bar = new Chart(ctxBar, {
-                type: 'bar',
+            const ctxPie = document.getElementById('pieChart').getContext('2d');
+            charts.pie = new Chart(ctxPie, {
+                type: 'doughnut',
                 data: {
-                    labels: ['พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.'],
-                    datasets: [{
-                        label: 'จำนวนครั้ง',
-                        data: [5, 10, 8, totalSups, 0], // ค่าจำลองผสมของจริง
-                        backgroundColor: '#1e3a8a',
-                        borderRadius: 4
-                    }]
+                    labels: Object.keys(aiUsage),
+                    datasets: [{ data: Object.values(aiUsage), backgroundColor: ['#3b82f6', '#e5e7eb'], borderWidth: 0 }]
                 },
-                options: { scales: { y: { beginAtZero: true } } }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
         }
 
-        // ระบบบันทึกฟอร์มนิเทศ
         function generateFormCriteria() {
             const tbody = document.getElementById('criteria-table-body');
             tbody.innerHTML = '';
             
-            criteriaList.forEach((text, index) => {
+            criteriaList.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="border p-3 text-gray-700">${text}</td>
-                    <td class="border p-3 text-center">
-                        <input type="radio" name="criteria_${index}" value="1" class="w-4 h-4 text-primary focus:ring-primary" required>
+                    <td class="border p-3">
+                        <div class="font-bold text-gray-800">${item.title}</div>
+                        <div class="text-xs text-gray-500 mt-1"><i class="fa-solid fa-caret-right text-teal-600 mr-1"></i> ${item.desc}</div>
                     </td>
-                    <td class="border p-3 text-center">
-                        <input type="radio" name="criteria_${index}" value="0" class="w-4 h-4 text-primary focus:ring-primary" required>
-                    </td>
+                    <td class="border p-3 text-center"><input type="radio" name="criteria_${index}" value="4" class="w-4 h-4 text-primary focus:ring-primary" required></td>
+                    <td class="border p-3 text-center"><input type="radio" name="criteria_${index}" value="3" class="w-4 h-4 text-primary focus:ring-primary" required></td>
+                    <td class="border p-3 text-center"><input type="radio" name="criteria_${index}" value="2" class="w-4 h-4 text-primary focus:ring-primary" required></td>
+                    <td class="border p-3 text-center"><input type="radio" name="criteria_${index}" value="1" class="w-4 h-4 text-primary focus:ring-primary" required></td>
+                    <td class="border p-3 text-center"><input type="radio" name="criteria_${index}" value="0" class="w-4 h-4 text-primary focus:ring-primary" required></td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
+        function toggleSubjectOther() {
+            const subjectSelect = document.getElementById('form-subject');
+            const subjectOtherInput = document.getElementById('form-subject-other');
+            if (subjectSelect.value === 'บูรณาการ') {
+                subjectOtherInput.classList.remove('hidden');
+                subjectOtherInput.required = true;
+            } else {
+                subjectOtherInput.classList.add('hidden');
+                subjectOtherInput.required = false;
+                subjectOtherInput.value = '';
+            }
+        }
+
         function prepareForm() {
             document.getElementById('supervisionForm').reset();
-            
-            // โหลดรายชื่อครูใส่ Select
-            const teacherSelect = document.getElementById('form-teacher-id');
-            teacherSelect.innerHTML = '<option value="">-- เลือกครูผู้รับการนิเทศ --</option>';
-            
-            dbUsers.filter(u => u.role === 'teacher').forEach(t => {
-                teacherSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+            const subjectOtherInput = document.getElementById('form-subject-other');
+            if(subjectOtherInput) {
+                subjectOtherInput.classList.add('hidden');
+                subjectOtherInput.required = false;
+            }
+
+            const selectTeacher = document.getElementById('form-teacher-id');
+            selectTeacher.innerHTML = '<option value="">-- เลือกครูผู้สอน --</option>';
+            dbUsers.filter(u => u.role === 'teacher' && u.status === 'active').forEach(u => {
+                selectTeacher.innerHTML += `<option value="${u.id}">${u.name}</option>`;
             });
-            
             document.getElementById('form-date').valueAsDate = new Date();
         }
 
         function submitSupervision(e) {
             e.preventDefault();
-            
-            // ดึงคะแนน 8 ข้อ
-            let scores = [];
-            for(let i=0; i<8; i++) {
-                const val = document.querySelector(`input[name="criteria_${i}"]:checked`).value;
-                scores.push(parseInt(val));
+            if(!currentUser || currentUser.role !== 'supervisor') {
+                Swal.fire('สิทธิ์ไม่เพียงพอ', 'เฉพาะผู้นิเทศเท่านั้นที่สามารถบันทึกได้', 'error');
+                return;
             }
 
-            // สร้าง Object ข้อมูล
+            let scores = [];
+            for(let i=0; i<8; i++) {
+                const radios = document.getElementsByName(`criteria_${i}`);
+                let val = 0;
+                for(let r of radios) { if(r.checked) { val = parseInt(r.value); break; } }
+                scores.push(val);
+            }
+
+            let finalSubject = document.getElementById('form-subject').value;
+            if (finalSubject === 'บูรณาการ') finalSubject = document.getElementById('form-subject-other').value;
+
             const newSup = {
                 id: 'SUP-' + Math.floor(Math.random() * 10000).toString().padStart(4, '0'),
                 date: document.getElementById('form-date').value,
+                phase: document.getElementById('form-empower-phase').value,
                 teacherId: parseInt(document.getElementById('form-teacher-id').value),
                 supervisorId: currentUser.id,
-                subject: document.getElementById('form-subject').value,
+                classLevel: document.getElementById('form-class-level').value,
+                room: document.getElementById('form-room').value,
+                subject: finalSubject,
+                topic: document.getElementById('form-topic').value,
+                paChallenge: document.getElementById('form-pa-challenge').value,
                 aiTools: document.getElementById('form-ai-tools').value,
                 scores: scores,
                 strengths: document.getElementById('form-strengths').value,
                 recommendations: document.getElementById('form-recommendations').value
             };
 
-            // บันทึกลง Mock DB
             dbSupervisions.push(newSup);
 
-            Swal.fire({
-                icon: 'success',
-                title: 'บันทึกสำเร็จ',
-                text: 'ข้อมูลการนิเทศถูกบันทึกเข้าระบบแล้ว',
-                confirmButtonColor: '#0f766e'
-            }).then(() => {
-                navigate('reports');
+            Swal.fire({ title: 'บันทึกสำเร็จ!', text: 'บันทึกข้อมูลการนิเทศและประเมิน ว PA เรียบร้อย', icon: 'success' }).then(() => {
+                navigate('report');
             });
         }
 
-        // หน้ารายงานผล
-        function renderReportsView(mode) {
+        function renderReport() {
             const tbody = document.getElementById('report-table-body');
-            const title = document.getElementById('report-page-title');
             tbody.innerHTML = '';
-
             let dataToShow = dbSupervisions;
 
-            // กรองข้อมูลตามโหมดและสิทธิ์
-            if (mode === 'my-reports' && currentUser && currentUser.role === 'teacher') {
-                title.innerText = "ผลการนิเทศของฉัน";
+            if (currentUser && currentUser.role === 'teacher') {
                 dataToShow = dbSupervisions.filter(s => s.teacherId === currentUser.id);
-            } else {
-                title.innerText = "รายงานผลการนิเทศทั้งหมด (ภาพรวม)";
             }
-
-            // จัดเรียงล่าสุดขึ้นก่อน
-            dataToShow.sort((a,b) => new Date(b.date) - new Date(a.date));
 
             if (dataToShow.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">ยังไม่มีข้อมูลการนิเทศ</td></tr>`;
-                return;
+                document.getElementById('report-empty').classList.remove('hidden');
+                tbody.parentNode.classList.add('hidden');
+            } else {
+                document.getElementById('report-empty').classList.add('hidden');
+                tbody.parentNode.classList.remove('hidden');
+                dataToShow.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+                dataToShow.forEach(s => {
+                    const teacher = dbUsers.find(u => u.id === s.teacherId)?.name || 'ไม่ทราบ';
+                    const supervisor = dbUsers.find(u => u.id === s.supervisorId)?.name || 'ไม่ทราบ';
+                    const scoreSum = s.scores.reduce((a,b)=>a+b, 0); 
+                    let badgeColor = scoreSum >= 24 ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800';
+                    const fullSubject = `${s.classLevel}${s.room ? '/' + s.room : ''} ${s.subject}`;
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="py-3 px-4">${s.date}</td>
+                            <td class="py-3 px-4 font-medium text-gray-800">${teacher}</td>
+                            <td class="py-3 px-4 text-gray-600">${supervisor}</td>
+                            <td class="py-3 px-4 text-gray-600 truncate max-w-xs" title="เรื่อง: ${s.topic}">${fullSubject}</td>
+                            <td class="py-3 px-4 text-center"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${scoreSum}/32</span></td>
+                            <td class="py-3 px-4 text-center">
+                                <button onclick="viewReportDetail('${s.id}')" class="text-primary hover:text-blue-800 bg-blue-50 p-1.5 rounded" title="ดูรายละเอียด"><i class="fa-solid fa-eye"></i></button>
+                                ${currentUser && currentUser.role === 'admin' ? `<button onclick="deleteSupervision('${s.id}')" class="text-red-600 hover:text-red-800 bg-red-50 p-1.5 rounded ml-1" title="ลบ"><i class="fa-solid fa-trash"></i></button>` : ''}
+                            </td>
+                        </tr>
+                    `;
+                });
             }
 
-            dataToShow.forEach(s => {
-                const teacher = dbUsers.find(u => u.id === s.teacherId)?.name || 'ไม่ทราบ';
-                const supervisor = dbUsers.find(u => u.id === s.supervisorId)?.name || 'ไม่ทราบ';
-                const scoreSum = s.scores.reduce((a,b)=>a+b, 0);
-                
-                let badgeColor = scoreSum >= 6 ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800';
-
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="py-3 px-4">${s.date}</td>
-                        <td class="py-3 px-4 font-medium text-gray-800">${teacher}</td>
-                        <td class="py-3 px-4 text-gray-600">${supervisor}</td>
-                        <td class="py-3 px-4 text-gray-600 truncate max-w-xs">${s.subject}</td>
-                        <td class="py-3 px-4 text-center">
-                            <span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${scoreSum}/8</span>
-                        </td>
-                        <td class="py-3 px-4 text-center">
-                            <button onclick="viewReportDetail('${s.id}')" class="text-primary hover:text-blue-800 bg-blue-50 p-1.5 rounded" title="ดูรายละเอียด">
-                                <i class="fa-solid fa-eye"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
+            const actionArea = document.getElementById('report-action-area');
+            if (currentUser && currentUser.role === 'supervisor') {
+                actionArea.innerHTML = `<button onclick="navigate('form')" class="bg-secondary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-teal-700 transition"><i class="fa-solid fa-plus mr-1"></i> นิเทศและประเมิน ว PA</button>`;
+            } else {
+                actionArea.innerHTML = '';
+            }
         }
 
         function viewReportDetail(supId) {
@@ -775,67 +930,193 @@
             if(!data) return;
             const teacher = dbUsers.find(u => u.id === data.teacherId)?.name;
             const supervisor = dbUsers.find(u => u.id === data.supervisorId)?.name;
+            const scoreSum = data.scores.reduce((a,b)=>a+b, 0);
+
+            let scoresHtml = '<table class="w-full text-xs text-left mt-2 mb-3 border"><thead><tr class="bg-gray-100"><th class="p-1 border">ตัวชี้วัด (ว PA ด้านที่ 1)</th><th class="p-1 border text-center w-12">คะแนน</th></tr></thead><tbody>';
+            data.scores.forEach((sc, idx) => {
+                scoresHtml += `<tr><td class="p-1 border truncate max-w-[200px]" title="${criteriaList[idx].title}">${criteriaList[idx].title}</td><td class="p-1 border text-center font-bold text-primary">${sc}</td></tr>`;
+            });
+            scoresHtml += '</tbody></table>';
 
             Swal.fire({
-                title: 'รายละเอียดการนิเทศ',
+                title: 'ผลการนิเทศและประเมิน ว PA',
                 html: `
-                    <div class="text-left text-sm mt-4 space-y-3">
-                        <p><strong>ผู้สอน:</strong> ${teacher}</p>
+                    <div class="text-left text-sm mt-4 space-y-2">
+                        <p><strong>ครูผู้สอน:</strong> ${teacher}</p>
                         <p><strong>ผู้นิเทศ:</strong> ${supervisor}</p>
-                        <p><strong>วิชา/เรื่อง:</strong> ${data.subject}</p>
-                        <p><strong>AI ที่ใช้:</strong> ${data.aiTools || '-'}</p>
+                        <p><strong>ระยะการนิเทศ:</strong> ${data.phase}</p>
+                        <p><strong>ระดับชั้น:</strong> ${data.classLevel}${data.room ? '/' + data.room : ''}</p>
+                        <p><strong>กลุ่มสาระฯ/วิชา:</strong> ${data.subject}</p>
+                        <p><strong>เรื่อง/หน่วยการเรียนรู้:</strong> ${data.topic}</p>
+                        <p><strong>ประเด็นท้าทาย (ว PA):</strong> <span class="text-blue-700 font-semibold">${data.paChallenge || '-ไม่ได้ระบุ-'}</span></p>
+                        <p><strong>สื่อเทคโนโลยี / นวัตกรรม:</strong> ${data.aiTools || '-'}</p>
                         <hr class="my-2">
-                        <p class="text-secondary font-bold">จุดเด่น:</p>
+                        <p><strong>คะแนนประเมินรวม:</strong> <span class="font-bold text-primary text-lg">${scoreSum} / 32</span></p>
+                        ${scoresHtml}
+                        <p class="text-secondary font-bold">จุดเด่นที่พบ (Strengths):</p>
                         <p class="bg-gray-50 p-2 rounded border">${data.strengths || '-'}</p>
-                        <p class="text-orange-600 font-bold mt-2">ข้อเสนอแนะ:</p>
+                        <p class="text-orange-600 font-bold mt-2">ข้อเสนอแนะสู่ประเด็นท้าทาย (Challenge):</p>
                         <p class="bg-gray-50 p-2 rounded border">${data.recommendations || '-'}</p>
                     </div>
                 `,
                 confirmButtonColor: '#1e3a8a',
-                confirmButtonText: 'ปิด'
+                width: '600px'
             });
         }
 
-        // หน้าผู้ดูแลระบบ (จำลอง UI)
-        function renderAdminUsers() {
-            const tbody = document.getElementById('admin-users-tbody');
+        function deleteSupervision(id) {
+            Swal.fire({ title: 'ยืนยันการลบ?', text: "คุณต้องการลบข้อมูลนี้ใช่หรือไม่!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'ลบเลย!' }).then((result) => {
+                if (result.isConfirmed) {
+                    dbSupervisions = dbSupervisions.filter(s => s.id !== id);
+                    renderReport();
+                    Swal.fire('ลบแล้ว!', '', 'success');
+                }
+            })
+        }
+
+        function renderAdmin() {
+            if(!currentUser || currentUser.role !== 'admin') { navigate('home'); return; }
+            const tbody = document.getElementById('admin-user-body');
             tbody.innerHTML = '';
 
             dbUsers.forEach(u => {
-                let roleColor = u.role === 'admin' ? 'bg-red-100 text-red-800' : 
-                                u.role === 'supervisor' ? 'bg-teal-100 text-teal-800' : 'bg-orange-100 text-orange-800';
+                let roleTh = u.role === 'admin' ? 'แอดมิน' : (u.role === 'supervisor' ? 'ผู้นิเทศ' : 'ครูผู้สอน');
+                let statusBadge = u.status === 'active' ? '<span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-bold">Active</span>' : '<span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-bold">Suspended</span>';
                 
-                let statusColor = u.status === 'active' ? 'text-green-500' : 'text-red-500';
-                let statusIcon = u.status === 'active' ? 'fa-circle-check' : 'fa-circle-xmark';
-
                 tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="py-3 px-4 font-medium">${u.name}</td>
-                        <td class="py-3 px-4 text-gray-500">${u.username}</td>
-                        <td class="py-3 px-4">
-                            <span class="px-2 py-1 rounded-full text-xs font-bold ${roleColor}">${u.role.toUpperCase()}</span>
-                        </td>
+                    <tr>
+                        <td class="py-3 px-4"><div class="font-bold text-gray-800">${u.username}</div><div class="text-xs text-gray-500">ID: ${u.id}</div></td>
+                        <td class="py-3 px-4">${u.name}</td>
+                        <td class="py-3 px-4">${roleTh}</td>
+                        <td class="py-3 px-4 text-center">${statusBadge}</td>
                         <td class="py-3 px-4 text-center">
-                            <i class="fa-solid ${statusIcon} ${statusColor}"></i>
-                        </td>
-                        <td class="py-3 px-4 text-center gap-2">
-                            <button class="text-blue-500 hover:text-blue-700 mx-1"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button class="text-red-500 hover:text-red-700 mx-1"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="editUser(${u.id})" class="text-blue-600 hover:text-blue-800 bg-blue-50 p-1.5 rounded mr-1"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="toggleUserStatus(${u.id})" class="text-orange-600 hover:text-orange-800 bg-orange-50 p-1.5 rounded mr-1"><i class="fa-solid fa-ban"></i></button>
+                            ${u.id !== currentUser.id ? `<button onclick="deleteUser(${u.id})" class="text-red-600 hover:text-red-800 bg-red-50 p-1.5 rounded"><i class="fa-solid fa-trash"></i></button>` : ''}
                         </td>
                     </tr>
                 `;
             });
         }
 
-        function openUserModal() {
-            Swal.fire({
-                title: 'การเพิ่มผู้ใช้',
-                text: 'ฟังก์ชันนี้จำลองให้เห็น UI เท่านั้น ในระบบจริงจะต้องเขียน API บันทึกลง Google Sheets หรือ Database',
-                icon: 'info',
-                confirmButtonColor: '#1e3a8a'
-            });
+        function showUserModal() {
+            document.getElementById('modal-user-title').textContent = 'เพิ่มผู้ใช้ใหม่';
+            document.getElementById('admin-user-id').value = '';
+            document.getElementById('admin-username').value = '';
+            document.getElementById('admin-password').value = '';
+            document.getElementById('admin-name').value = '';
+            document.getElementById('admin-role').value = 'teacher';
+            document.getElementById('modal-user').classList.remove('hidden');
         }
 
+        function hideUserModal() { document.getElementById('modal-user').classList.add('hidden'); }
+
+        function editUser(id) {
+            const u = dbUsers.find(x => x.id === id);
+            if(!u) return;
+            document.getElementById('modal-user-title').textContent = 'แก้ไขผู้ใช้';
+            document.getElementById('admin-user-id').value = u.id;
+            document.getElementById('admin-username').value = u.username;
+            document.getElementById('admin-password').value = u.password;
+            document.getElementById('admin-name').value = u.name;
+            document.getElementById('admin-role').value = u.role;
+            document.getElementById('modal-user').classList.remove('hidden');
+        }
+
+        function saveUser(e) {
+            e.preventDefault();
+            const id = document.getElementById('admin-user-id').value;
+            const username = document.getElementById('admin-username').value;
+            const password = document.getElementById('admin-password').value;
+            const name = document.getElementById('admin-name').value;
+            const role = document.getElementById('admin-role').value;
+
+            if (id) {
+                const idx = dbUsers.findIndex(x => x.id == id);
+                dbUsers[idx] = { ...dbUsers[idx], username, password, name, role };
+                Swal.fire('สำเร็จ', 'แก้ไขข้อมูลเรียบร้อย', 'success');
+            } else {
+                if(dbUsers.find(x => x.username === username)) { Swal.fire('ข้อผิดพลาด', 'Username นี้มีในระบบแล้ว', 'error'); return; }
+                const newId = Math.max(...dbUsers.map(u => u.id)) + 1;
+                dbUsers.push({ id: newId, username, password, name, role, status: 'active' });
+                Swal.fire('สำเร็จ', 'เพิ่มผู้ใช้เรียบร้อย', 'success');
+            }
+            hideUserModal();
+            renderAdmin();
+        }
+
+        function toggleUserStatus(id) {
+            if(id === currentUser.id) { Swal.fire('ผิดพลาด', 'ไม่สามารถระงับสิทธิ์ตัวเองได้', 'error'); return; }
+            const idx = dbUsers.findIndex(x => x.id === id);
+            dbUsers[idx].status = dbUsers[idx].status === 'active' ? 'suspended' : 'active';
+            renderAdmin();
+        }
+
+        function deleteUser(id) {
+             Swal.fire({ title: 'ยืนยันการลบผู้ใช้?', text: "หากลบแล้วจะไม่สามารถกู้คืนได้!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'ลบเลย!' }).then((result) => {
+                if (result.isConfirmed) { dbUsers = dbUsers.filter(u => u.id !== id); renderAdmin(); Swal.fire('ลบแล้ว!', '', 'success'); }
+            })
+        }
+
+        async function generateAIRecommendations() {
+            const classLevel = document.getElementById('form-class-level').value;
+            const subjectSelect = document.getElementById('form-subject').value;
+            const subjectOther = document.getElementById('form-subject-other').value;
+            const finalSubject = subjectSelect === 'บูรณาการ' ? subjectOther : subjectSelect;
+            const topic = document.getElementById('form-topic').value;
+            const paChallenge = document.getElementById('form-pa-challenge').value;
+            const aiTools = document.getElementById('form-ai-tools').value;
+            const strengths = document.getElementById('form-strengths').value;
+            const phase = document.getElementById('form-empower-phase').value;
+
+            if (!topic || !strengths || !finalSubject) {
+                Swal.fire('ข้อมูลไม่เพียงพอ', 'กรุณาระบุ "กลุ่มสาระฯ/วิชา", "เรื่อง/หน่วยการเรียนรู้" และ "จุดเด่นที่พบ" ก่อนให้ AI ช่วยร่างข้อเสนอแนะ', 'warning');
+                return;
+            }
+
+            let totalScore = 0;
+            for(let i=0; i<8; i++) {
+                const radios = document.getElementsByName(`criteria_${i}`);
+                for(let r of radios) { if(r.checked) { totalScore += parseInt(r.value); break; } }
+            }
+
+            const btn = document.querySelector('button[onclick="generateAIRecommendations()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> กำลังวิเคราะห์...';
+            btn.disabled = true;
+
+            // System Prompt แบบบูรณาการ กลาง ใช้ได้ทุกวิชา เน้นเข้าสู่ประเด็นท้าทาย ว PA
+            const systemPrompt = "คุณคือ 'ศึกษานิเทศก์ระดับจังหวัด' ผู้เชี่ยวชาญด้านการจัดการเรียนรู้เชิงรุก (Active Learning) การปฏิบัติตามมาตรฐานตำแหน่ง และการประเมินวิทยฐานะ (ว PA) คุณกำลังใช้กระบวนการ 'นิเทศแบบเสริมพลัง (Empowerment Supervision)' หน้าที่ของคุณคือการให้ข้อเสนอแนะเชิงบวกแก่ครู (Empower) โดยชื่นชมจุดเด่น และให้คำแนะนำที่เชื่อมโยง 'การปฏิบัติตามมาตรฐานตำแหน่ง' เข้าสู่ 'ประเด็นท้าทาย (Challenge Issue)' ของครูได้อย่างเป็นรูปธรรม ให้คำแนะนำที่สอดคล้องกับวิชาและระดับชั้นที่สอน ไม่เกิน 4 บรรทัด ใช้ภาษาทางการและสร้างแรงบันดาลใจ";
+            const userQuery = `ข้อมูลการนิเทศ: ระยะ ${phase}, ระดับชั้น: ${classLevel}, วิชา: ${finalSubject}, เรื่อง: ${topic}, ประเด็นท้าทายของครู: ${paChallenge || 'ไม่ได้ระบุ'}, สื่อเทคโนโลยี/นวัตกรรมที่ใช้: ${aiTools || 'ไม่ได้ระบุ'}, คะแนนประเมินรวม 8 ตัวชี้วัด: ${totalScore}/32, จุดเด่นที่ครูทำได้ดี: ${strengths}. โปรดร่างข้อเสนอแนะเพื่อพัฒนาต่อยอดการปฏิบัติตามมาตรฐานตำแหน่ง และเชื่อมโยงสู่ประเด็นท้าทาย (ว PA)`;
+
+            const apiKey = ""; // API Key ถูกจัดการโดย Canvas โดยอัตโนมัติ
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            try {
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const result = await response.json();
+                if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts[0].text) {
+                    const aiText = result.candidates[0].content.parts[0].text;
+                    const recElement = document.getElementById('form-recommendations');
+                    
+                    if (recElement.value.trim() === '') recElement.value = aiText.trim();
+                    else recElement.value += '\n\n[✨ AI Suggestion สู่ประเด็นท้าทาย]:\n' + aiText.trim();
+                    
+                    Swal.fire({ title: 'AI ร่างข้อเสนอแนะสำเร็จ!', text: 'คุณสามารถปรับแก้ข้อความเพิ่มเติมได้ตามความเหมาะสมเพื่อใช้เป็นข้อมูลสะท้อนคิด', icon: 'success', timer: 3000, showConfirmButton: false });
+                } else { throw new Error("โครงสร้างข้อมูลจาก Gemini API ไม่ถูกต้อง"); }
+            } catch (error) {
+                console.error("AI Generation Error:", error);
+                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อ AI ได้ในขณะนี้ โปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองอีกครั้ง', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
     </script>
 </body>
 </html>
